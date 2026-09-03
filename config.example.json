@@ -1,0 +1,274 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8765,
+    "maxToolOutputChars": 160000
+  },
+  "security": {
+    "allowSecretFiles": false,
+    "secretFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa",
+      "id_ed25519",
+      "*credentials*.json",
+      "*secrets*.json"
+    ],
+    "httpAllowedHosts": [
+      "127.0.0.1",
+      "localhost",
+      "::1"
+    ],
+    "fullShellGrantMinutes": 30,
+    "requireLinuxFilesystem": false,
+    "processSandbox": false,
+    "requireProcessSandbox": false,
+    "bwrapPath": "/usr/bin/bwrap",
+    "safeNetworkDefault": false,
+    "maskSecretFilesInSafeProcesses": true,
+    "requireProjectCwdForDriveWorkspace": true,
+    "windowsSandboxMemoryMb": 2048
+  },
+  "workspaces": [
+    {
+      "id": "main",
+      "root": "C:\\GPTAgent\\workspace",
+      "enabled": true
+    }
+  ],
+  "safeCommands": {
+    "git": [
+      "status",
+      "diff",
+      "log",
+      "show",
+      "branch",
+      "rev-parse",
+      "ls-files",
+      "grep",
+      "blame",
+      "merge-base"
+    ],
+    "npm": [
+      "test",
+      "run"
+    ],
+    "pnpm": [
+      "test",
+      "run"
+    ],
+    "yarn": [
+      "test",
+      "run"
+    ],
+    "bun": [
+      "test",
+      "run"
+    ],
+    "node": [
+      "*"
+    ],
+    "python3": [
+      "*"
+    ],
+    "pytest": [
+      "*"
+    ],
+    "ruff": [
+      "*"
+    ],
+    "pyright": [
+      "*"
+    ],
+    "tsc": [
+      "*"
+    ],
+    "eslint": [
+      "*"
+    ],
+    "biome": [
+      "*"
+    ],
+    "cargo": [
+      "*"
+    ],
+    "rustc": [
+      "*"
+    ],
+    "go": [
+      "*"
+    ],
+    "gofmt": [
+      "*"
+    ],
+    "dotnet": [
+      "*"
+    ],
+    "rg": [
+      "*"
+    ],
+    "fd": [
+      "*"
+    ],
+    "fdfind": [
+      "*"
+    ],
+    "jq": [
+      "*"
+    ],
+    "yq": [
+      "*"
+    ],
+    "shellcheck": [
+      "*"
+    ],
+    "semgrep": [
+      "*"
+    ],
+    "sqlite3": [
+      "*"
+    ],
+    "make": [
+      "*"
+    ],
+    "cmake": [
+      "*"
+    ],
+    "clang": [
+      "*"
+    ],
+    "clang++": [
+      "*"
+    ]
+  },
+  "lspServers": {
+    "typescript": {
+      "extensions": [
+        ".ts",
+        ".tsx"
+      ],
+      "serverId": "typescript",
+      "command": "typescript-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languageId": "typescript"
+    },
+    "javascript": {
+      "extensions": [
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs"
+      ],
+      "serverId": "typescript",
+      "command": "typescript-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languageId": "javascript"
+    },
+    "python": {
+      "extensions": [
+        ".py"
+      ],
+      "serverId": "pyright",
+      "command": "pyright-langserver",
+      "args": [
+        "--stdio"
+      ],
+      "languageId": "python"
+    },
+    "go": {
+      "extensions": [
+        ".go"
+      ],
+      "serverId": "gopls",
+      "command": "gopls",
+      "args": [],
+      "languageId": "go"
+    },
+    "rust": {
+      "extensions": [
+        ".rs"
+      ],
+      "serverId": "rust-analyzer",
+      "command": "rust-analyzer",
+      "args": [],
+      "languageId": "rust"
+    },
+    "c": {
+      "extensions": [
+        ".c",
+        ".h"
+      ],
+      "serverId": "clangd",
+      "command": "clangd",
+      "args": [
+        "--background-index"
+      ],
+      "languageId": "c"
+    },
+    "cpp": {
+      "extensions": [
+        ".cc",
+        ".cpp",
+        ".cxx",
+        ".hpp",
+        ".hh"
+      ],
+      "serverId": "clangd",
+      "command": "clangd",
+      "args": [
+        "--background-index"
+      ],
+      "languageId": "cpp"
+    },
+    "bash": {
+      "extensions": [
+        ".sh",
+        ".bash"
+      ],
+      "serverId": "bash-language-server",
+      "command": "bash-language-server",
+      "args": [
+        "start"
+      ],
+      "languageId": "shellscript"
+    },
+    "json": {
+      "extensions": [
+        ".json"
+      ],
+      "serverId": "vscode-json",
+      "command": "vscode-json-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languageId": "json"
+    },
+    "yaml": {
+      "extensions": [
+        ".yml",
+        ".yaml"
+      ],
+      "serverId": "yaml-language-server",
+      "command": "yaml-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languageId": "yaml"
+    }
+  },
+  "debugAdapters": {
+    "python": {
+      "command": "__GPT_AGENT_TOOLS_PYTHON__",
+      "args": [
+        "-m",
+        "debugpy.adapter"
+      ]
+    }
+  }
+}

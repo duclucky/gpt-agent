@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go-core/go.mod
+          cache-dependency-path: go-core/go.sum
+      - name: Go test
+        working-directory: go-core
+        run: go test ./...
+      - name: Go vet
+        working-directory: go-core
+        run: go vet ./...
+      - name: PowerShell syntax
+        shell: pwsh
+        run: |
+          $errors = @()
+          Get-ChildItem scripts/windows -Filter '*.ps1' | ForEach-Object {
+            $tokens = $null
+            $parse = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$parse)
+            if ($parse) { $errors += $parse }
+          }
+          if ($errors.Count) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }

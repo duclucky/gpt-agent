@@ -1,0 +1,29 @@
+# Build outputs
+/dist/
+/release/
+*.exe
+*.zip
+*.sha256
+
+# Local runtime state
+/data/config.json
+/data/*.log
+/data/*.pid
+/data/*.jsonl
+/data/audit-repair-backups/
+/data/full-shell.grant.json
+/data/processes/
+/data/artifacts/
+/config/secrets/
+/config/tunnel-client/
+
+# Tooling caches
+node_modules/
+.venv-tools/
+.gpt-agent/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

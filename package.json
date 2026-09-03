@@ -1,0 +1,10 @@
+{
+  "name": "gpt-agent-audit-compat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal Node compatibility fixture used by GPT Agent Go audit regression tests.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}

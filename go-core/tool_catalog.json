@@ -1,0 +1,2704 @@
+[
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Inspect runtime, workspaces and the current full-shell grant. Read-only.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_status",
+    "title": "Status"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Summarize project tree, manifests, package scripts and Git state.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_workspace_inspect",
+    "title": "Inspect Workspace"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Inspect a project directory inside a workspace, including nested Git root/status, manifests, scripts, risk signals, durable context, and a deterministic verification plan.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "includeContext": {
+          "default": true,
+          "type": "boolean"
+        },
+        "maxContextChars": {
+          "default": 10000,
+          "maximum": 50000,
+          "minimum": 500,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_project_inspect",
+    "title": "Inspect Project"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read a Git diff using the repository containing the requested project path, rather than assuming the workspace root is the repository.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxChars": {
+          "default": 160000,
+          "maximum": 300000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "staged": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_project_diff",
+    "title": "Project Git Diff"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Create status/working/staged patch artifacts for the Git repository containing a nested project path.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "label": {
+          "default": "checkpoint",
+          "type": "string"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_project_checkpoint",
+    "title": "Project Checkpoint"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Restore the tracked staged/working state from a v2 project checkpoint on the same Git HEAD. Creates a safety checkpoint first and never removes untracked files.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "checkpointId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "confirm": {
+          "const": "RESTORE",
+          "type": "string"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "checkpointId",
+        "confirm"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_project_checkpoint_restore",
+    "title": "Restore Project Checkpoint"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Execute the deterministic verification plan discovered for a project using sandboxed SAFE commands in the project cwd.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "network": {
+          "default": false,
+          "type": "boolean"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "stages": {
+          "default": [],
+          "items": {
+            "enum": [
+              "format",
+              "lint",
+              "typecheck",
+              "test",
+              "build"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "stopOnFailure": {
+          "default": true,
+          "type": "boolean"
+        },
+        "timeoutMsPerStep": {
+          "default": 300000,
+          "maximum": 1800000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_project_verify",
+    "title": "Verify Project"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Install or refresh the pinned GPT Agent coding skill pack for repository surgery, debugging, impact analysis, verification, review, context discipline, and bounded autonomous repair.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_coding_skills_install",
+    "title": "Install Coding Skill Pack"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Build a one-call coding orientation packet, open an automatic learning session, retrieve scoped memory and evidence-backed prior outcomes, and inject reusable SKILL.md procedures with feedback-weighted ranking.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxMemories": {
+          "default": 8,
+          "maximum": 50,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxSkills": {
+          "default": 8,
+          "maximum": 20,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "task": {
+          "default": "",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_coding_brief",
+    "title": "Build Coding Brief"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "One-call project-scoped orientation: project/Git/risk/context plus multiple text searches, selected file reads, and optional repo map executed concurrently. Prefer this over many separate discovery calls on broad workspaces.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "files": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "type": "array"
+        },
+        "includeContext": {
+          "default": true,
+          "type": "boolean"
+        },
+        "includeMap": {
+          "default": false,
+          "type": "boolean"
+        },
+        "maxFileChars": {
+          "default": 12000,
+          "maximum": 50000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "maxMapFiles": {
+          "default": 80,
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxResultsPerQuery": {
+          "default": 40,
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "queries": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "type": "array"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_fast_context",
+    "title": "Fast Coding Context"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Recursively list files under a workspace path.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxDepth": {
+          "default": 8,
+          "maximum": 20,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxFiles": {
+          "default": 2000,
+          "maximum": 10000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_list_files",
+    "title": "List Files"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read a text file with SHA-256 for optimistic edits.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxChars": {
+          "default": 120000,
+          "maximum": 300000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_read_file",
+    "title": "Read File"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read an exact line range with line numbers and SHA-256.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "endLine": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxChars": {
+          "default": 120000,
+          "maximum": 300000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "startLine": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "startLine",
+        "endLine"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_read_file_range",
+    "title": "Read File Range"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Fast project-scoped repository search using ripgrep when available, JS fallback otherwise. Set path to avoid scanning a broad workspace root.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "caseSensitive": {
+          "default": false,
+          "type": "boolean"
+        },
+        "glob": {
+          "type": "string"
+        },
+        "maxResults": {
+          "default": 200,
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "query": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "regex": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_search_text",
+    "title": "Search Code/Text"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Lightweight symbol outline for JS/TS/Python/Go/Rust.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_code_outline",
+    "title": "Code Outline"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Project-scoped AST structural search through ast-grep when installed.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "globs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": "string"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "pattern": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "pattern"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_structural_search",
+    "title": "AST Structural Search"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Build a compact project-scoped architecture map with concurrent file outlining. Set path when the workspace contains multiple repositories.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxFiles": {
+          "default": 120,
+          "maximum": 300,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_repo_map",
+    "title": "Repository Map"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Create or replace a workspace file. expectedSha256 protects against concurrent changes.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "createParents": {
+          "default": true,
+          "type": "boolean"
+        },
+        "expectedSha256": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "content"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_write_file",
+    "title": "Write File"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Exact-string replacement; refuses ambiguous matches unless replaceAll=true.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "expectedSha256": {
+          "type": "string"
+        },
+        "newText": {
+          "type": "string"
+        },
+        "oldText": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "replaceAll": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "oldText",
+        "newText"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_replace_text",
+    "title": "Replace Exact Text"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Create a workspace directory.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_make_directory",
+    "title": "Make Directory"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Move or rename inside the same workspace.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "type": "boolean"
+        },
+        "to": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "from",
+        "to"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_move_path",
+    "title": "Move/Rename Path"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Delete a workspace path. Requires literal confirm='DELETE'.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "confirm": {
+          "const": "DELETE",
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "recursive": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "confirm"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_delete_path",
+    "title": "Delete Path"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read Git status.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_git_status",
+    "title": "Git Status"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read working-tree or staged diff.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "staged": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_git_diff",
+    "title": "Git Diff"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read recent Git history.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxCount": {
+          "default": 30,
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_git_log",
+    "title": "Git Log"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Save current status and Git patches as local artifacts without modifying history.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "label": {
+          "default": "checkpoint",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_checkpoint",
+    "title": "Create Checkpoint Artifact"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Validate with git apply --check, then apply a unified patch.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "patch": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "patch"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_apply_git_patch",
+    "title": "Apply Git Patch"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Run executable+args without a shell in an explicit workspace/project cwd. On Linux SAFE mode uses bubblewrap filesystem isolation, masks secret-like files, and disables network by default.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "args": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "cwd": {
+          "default": ".",
+          "type": "string"
+        },
+        "executable": {
+          "type": "string"
+        },
+        "network": {
+          "default": false,
+          "type": "boolean"
+        },
+        "timeoutMs": {
+          "default": 1800000,
+          "maximum": 1800000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "executable"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_run_command",
+    "title": "Run Safe Command"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Run an allowed command against a disposable secret-sanitized copy of a project in bubblewrap. The real source is not mounted, network is always disabled, and the scratch copy is deleted afterward. This is stronger repository containment but not a malware-analysis VM/kernel boundary.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "args": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "cwd": {
+          "default": ".",
+          "type": "string"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "propertyNames": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "executable": {
+          "type": "string"
+        },
+        "timeoutMs": {
+          "default": 1800000,
+          "maximum": 1800000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "executable"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_untrusted_run",
+    "title": "Run Disposable Untrusted Command"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Start a sandboxed SAFE-mode background process in an explicit workspace/project cwd and capture logs. Network is disabled by default.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "args": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "cwd": {
+          "default": ".",
+          "type": "string"
+        },
+        "executable": {
+          "type": "string"
+        },
+        "network": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "executable"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_start_process",
+    "title": "Start Background Process"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read background process state.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "processId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "processId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_process_status",
+    "title": "Process Status"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read captured background process logs.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "processId": {
+          "type": "string"
+        },
+        "tailChars": {
+          "default": 30000,
+          "maximum": 120000,
+          "minimum": 1000,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "processId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_process_logs",
+    "title": "Process Logs"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Stop a previously started process and child process tree.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "processId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "processId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_stop_process",
+    "title": "Stop Process Tree"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Arbitrary Bash/PowerShell inside a workspace/project cwd when the local full-shell grant is active.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "command": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "cwd": {
+          "default": ".",
+          "type": "string"
+        },
+        "timeoutMs": {
+          "default": 1800000,
+          "maximum": 1800000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "command"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_full_shell",
+    "title": "Full Shell"
+  },
+  {
+    "annotations": {
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Call HTTP/HTTPS on hosts explicitly allowed in config; defaults to localhost only.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "body": {
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "propertyNames": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "method": {
+          "default": "GET",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "HEAD"
+          ],
+          "type": "string"
+        },
+        "timeoutMs": {
+          "default": 15000,
+          "maximum": 120000,
+          "minimum": 500,
+          "type": "integer"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_http_request",
+    "title": "Local HTTP Request"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Persist a curated fact, preference, project detail or lesson across sessions. Exact duplicates are merged within the same scope.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "content": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "importance": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "kind": {
+          "default": "fact",
+          "enum": [
+            "fact",
+            "preference",
+            "project",
+            "lesson",
+            "decision",
+            "environment"
+          ],
+          "type": "string"
+        },
+        "scope": {
+          "default": "global",
+          "type": "string"
+        },
+        "source": {
+          "default": "manual",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_memory_remember",
+    "title": "Remember Memory"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Search persistent GPT Agent memory using lexical relevance, importance, recency and optional project/global scopes.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "kinds": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "limit": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "query": {
+          "default": "",
+          "type": "string"
+        },
+        "scopes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "name": "gpt_agent_memory_search",
+    "title": "Search Memory"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Delete one persistent memory by its id.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_memory_forget",
+    "title": "Forget Memory"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Create or update a reusable SKILL.md procedural memory. Agent-created skills are tracked for lifecycle management.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "content": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "createdBy": {
+          "default": "agent",
+          "enum": [
+            "agent",
+            "user"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "pinned": {
+          "default": false,
+          "type": "boolean"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "version": {
+          "default": "1.0.0",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "content"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_upsert",
+    "title": "Create or Improve Skill"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "List or search reusable procedural skills, optionally including archived skills.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "includeArchived": {
+          "default": false,
+          "type": "boolean"
+        },
+        "query": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_list",
+    "title": "List Skills"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read a skill's SKILL.md and optionally record that it was used.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "recordUse": {
+          "default": true,
+          "type": "boolean"
+        },
+        "slug": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_get",
+    "title": "Read Skill"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Record a skill use/view/patch event for curator lifecycle decisions.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "event": {
+          "default": "use",
+          "enum": [
+            "use",
+            "view",
+            "patch"
+          ],
+          "type": "string"
+        },
+        "slug": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_record_usage",
+    "title": "Record Skill Usage"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Pin or unpin an active skill. Pinned skills are exempt from curator archival.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "pinned": {
+          "type": "boolean"
+        },
+        "slug": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "pinned"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_pin",
+    "title": "Pin Skill"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Archive an unpinned skill instead of deleting it, preserving recoverability.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "slug": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_archive",
+    "title": "Archive Skill"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Restore the newest archived copy of a skill back to the active skill set.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "slug": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_restore",
+    "title": "Restore Skill"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Persist curated durable learning from a completed task or user correction. When workspaceId is provided, memories are automatically scoped to the actual project root so unrelated repositories do not contaminate retrieval.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "memories": {
+          "default": [],
+          "items": {
+            "properties": {
+              "content": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "importance": {
+                "default": 0.6,
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              "kind": {
+                "default": "lesson",
+                "enum": [
+                  "fact",
+                  "preference",
+                  "project",
+                  "lesson",
+                  "decision",
+                  "environment"
+                ],
+                "type": "string"
+              },
+              "source": {
+                "default": "task",
+                "type": "string"
+              },
+              "tags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "content"
+            ],
+            "type": "object"
+          },
+          "maxItems": 50,
+          "type": "array"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "skills": {
+          "default": [],
+          "items": {
+            "properties": {
+              "content": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "createdBy": {
+                "default": "agent",
+                "enum": [
+                  "agent",
+                  "user"
+                ],
+                "type": "string"
+              },
+              "description": {
+                "default": "",
+                "type": "string"
+              },
+              "name": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "pinned": {
+                "default": false,
+                "type": "boolean"
+              },
+              "tags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "version": {
+                "default": "1.0.0",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "content"
+            ],
+            "type": "object"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "gpt_agent_learn",
+    "title": "Persist Learning"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Identify stale unpinned skills and optionally archive them. Defaults to dry-run.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "dryRun": {
+          "default": true,
+          "type": "boolean"
+        },
+        "staleAfterDays": {
+          "default": 60,
+          "maximum": 3650,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": "gpt_agent_skill_curate",
+    "title": "Curate Skills"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Inspect persistent memory, skills, automatic learning-session history, evidence candidates, and feedback-driven skill outcome counts.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_learning_stats",
+    "title": "Learning Stats"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Discover common agent/project instruction files in a workspace and return bounded contents for context loading.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxCharsPerFile": {
+          "default": 12000,
+          "maximum": 50000,
+          "minimum": 500,
+          "type": "integer"
+        },
+        "path": {
+          "default": ".",
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_context_discover",
+    "title": "Discover Project Context"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Inspect installed compilers, search tools, language servers, debugger support, Docker and WSL workspace placement.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_toolchain_status",
+    "title": "Toolchain Status"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Run an end-to-end runtime health gate covering WSL detection, health/MCP, tunnel, audit, manifest, dependencies, configured language servers, SAFE sandbox, and source Git state.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "deep": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "gpt_agent_self_check",
+    "title": "Self Check"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "List background processes previously started by GPT Agent.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_process_list",
+    "title": "List Managed Processes"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Wait for a local TCP port to open after starting a development server.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "host": {
+          "default": "127.0.0.1",
+          "type": "string"
+        },
+        "intervalMs": {
+          "default": 250,
+          "maximum": 5000,
+          "minimum": 50,
+          "type": "integer"
+        },
+        "port": {
+          "maximum": 65535,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "timeoutMs": {
+          "default": 30000,
+          "maximum": 120000,
+          "minimum": 100,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_wait_port",
+    "title": "Wait For Local Port"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Show configured and active language-server sessions.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_status",
+    "title": "LSP Status"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Use the language server for compiler-grade definition lookup. line and character are zero-based.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "character": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "line": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "line",
+        "character"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_definition",
+    "title": "Go To Definition"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Use the language server to find symbol references. line and character are zero-based.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "character": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "includeDeclaration": {
+          "default": true,
+          "type": "boolean"
+        },
+        "line": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "line",
+        "character"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_references",
+    "title": "Find References"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Ask the language server for type/signature/documentation at a position.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "character": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "line": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "line",
+        "character"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_hover",
+    "title": "Type/Hover Info"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Get compiler/language-server document symbols.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_symbols",
+    "title": "Document Symbols"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Search symbols across a workspace. languageHintPath chooses which configured language server to use.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "languageHintPath": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_workspace_symbols",
+    "title": "Workspace Symbols"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Open/sync a document in its language server and return published diagnostics.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "waitMs": {
+          "default": 1200,
+          "maximum": 5000,
+          "minimum": 100,
+          "type": "integer"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_diagnostics",
+    "title": "LSP Diagnostics"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Ask the language server for a WorkspaceEdit for symbol rename, but do not apply it.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "character": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "line": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "newName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "line",
+        "character",
+        "newName"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_lsp_rename_preview",
+    "title": "Rename Preview"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Inspect SQLite schema in a database file inside the workspace.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_sqlite_schema",
+    "title": "SQLite Schema"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Run a read-only SELECT/PRAGMA/EXPLAIN/WITH query against a workspace SQLite database.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "maxChars": {
+          "default": 80000,
+          "maximum": 160000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sql": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "path",
+        "sql"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_sqlite_query",
+    "title": "SQLite Readonly Query"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Launch a Python program inside the workspace through debugpy/DAP with optional breakpoints.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "args": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "breakpoints": {
+          "default": [],
+          "items": {
+            "properties": {
+              "column": {
+                "maximum": 9007199254740991,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "line": {
+                "maximum": 9007199254740991,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "line"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "cwd": {
+          "default": ".",
+          "type": "string"
+        },
+        "justMyCode": {
+          "default": true,
+          "type": "boolean"
+        },
+        "program": {
+          "type": "string"
+        },
+        "stopOnEntry": {
+          "default": false,
+          "type": "boolean"
+        },
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "program"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_python_start",
+    "title": "Start Python Debugger"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "List active debugger sessions.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_status",
+    "title": "Debug Sessions"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Drain recent DAP events such as stopped/output/terminated.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "sessionId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_events",
+    "title": "Debug Events"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "List debugger threads.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "sessionId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_threads",
+    "title": "Debug Threads"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Get stack frames for a thread.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "levels": {
+          "default": 50,
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "startFrame": {
+          "default": 0,
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "threadId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "threadId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_stack",
+    "title": "Debug Stack"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Get local/global scopes for a stack frame.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "frameId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        },
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "sessionId",
+        "frameId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_scopes",
+    "title": "Debug Scopes"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Inspect variables for a DAP variablesReference.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "count": {
+          "default": 200,
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "start": {
+          "default": 0,
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "variablesReference": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "variablesReference"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_variables",
+    "title": "Debug Variables"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Evaluate an expression in a debug frame.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "context": {
+          "default": "repl",
+          "enum": [
+            "watch",
+            "repl",
+            "hover",
+            "clipboard",
+            "variables"
+          ],
+          "type": "string"
+        },
+        "expression": {
+          "type": "string"
+        },
+        "frameId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        },
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "sessionId",
+        "expression"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_evaluate",
+    "title": "Debug Evaluate"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Continue a stopped debugger thread.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "threadId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "threadId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_continue",
+    "title": "Debug Continue"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Step over in a debugger thread.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "threadId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "threadId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_next",
+    "title": "Debug Step Over"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Step into in a debugger thread.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "threadId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "threadId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_step_in",
+    "title": "Debug Step In"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Pause a running debugger thread.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "threadId": {
+          "maximum": 9007199254740991,
+          "minimum": -9007199254740991,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "threadId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_pause",
+    "title": "Debug Pause"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Disconnect and terminate a debug session.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "sessionId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_debug_stop",
+    "title": "Stop Debugger"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read recent local audit events.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": "gpt_agent_audit_tail",
+    "title": "Audit Tail"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Verify the local SHA-256 hash-chained audit log.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_audit_verify",
+    "title": "Verify Audit Chain"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    },
+    "description": "Repair a broken audit hash chain without dropping event content. Creates an immutable backup of the original JSONL first, then rechains records and appends a repair event.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "confirm": {
+          "const": "REPAIR",
+          "type": "string"
+        }
+      },
+      "required": [
+        "confirm"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_audit_repair",
+    "title": "Repair Audit Chain"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
+    "description": "Start an existing GPT Agent tool asynchronously and return a job id immediately. Use this for operations that may approach the MCP tunnel response deadline.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "default": {},
+          "type": "object"
+        },
+        "maxRunMs": {
+          "default": 1800000,
+          "maximum": 1800000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "tool": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_job_start",
+    "title": "Start Async Tool Job"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Read the state and timing of a Go-core asynchronous GPT Agent tool job without waiting for the underlying operation.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_job_status",
+    "title": "Async Tool Job Status"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "Collect the completed backend MCP tool result for a Go-core asynchronous job. Returns immediately when the job is still running.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId"
+      ],
+      "type": "object"
+    },
+    "name": "gpt_agent_job_result",
+    "title": "Async Tool Job Result"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true
+    },
+    "description": "List bounded recent Go-core asynchronous tool jobs so work can be recovered after a tunnel response or chat interruption.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {},
+      "type": "object"
+    },
+    "name": "gpt_agent_job_list",
+    "title": "List Async Tool Jobs"
+  }
+]

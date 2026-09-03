@@ -1,0 +1,207 @@
+[
+  {
+    "slug": "gpt-agent-repo-surgeon",
+    "metadata": {
+      "name": "GPT Agent Repo Surgeon",
+      "description": "Repository-level implementation workflow: understand first, change minimally, validate evidence, review the final diff.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "repository",
+        "repo",
+        "implementation",
+        "workflow",
+        "refactor",
+        "sua-code",
+        "trien-khai-code"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.802Z",
+      "updated_at": "2026-08-21T22:03:57.66Z"
+    },
+    "content": "---\nname: GPT Agent Repo Surgeon\ndescription: Repository-level implementation workflow: understand first, change minimally, validate evidence, review the final diff.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"repository\", \"repo\", \"implementation\", \"workflow\", \"refactor\", \"sua-code\", \"trien-khai-code\"]\n---\n\n# GPT Agent Repo Surgeon\n\nUse for non-trivial repository changes.\n\n## Protocol\n1. Inspect the exact project path, Git state, manifests, durable project context, and relevant source before editing. When multiple discovery operations are known up front, prefer one gpt_agent_fast_context call with project-scoped searches/reads instead of serial tool calls.\n2. Search call sites, symbols, references, configuration, tests, and dependent interfaces. Scope search/map operations to the project path; batch independent queries. Prefer LSP/AST when healthy; fall back to code outline/search when not.\n3. State the smallest robust implementation plan internally and identify validation gates before edits.\n4. Create a checkpoint for risky Git-backed work. Never overwrite unrelated user changes.\n5. Make precise edits that preserve architecture and backward compatibility unless a breaking change is explicitly requested.\n6. During iteration run only the narrowest relevant checks. Run broader lint/typecheck/test/build/runtime gates once near completion or earlier only when risk justifies them.\n7. Read the final diff, inspect changed call sites, and look for accidental edits, security regressions, missing tests, and incomplete schema/config updates.\n8. Run the completion learning review from GPT Agent Learning Loop and persist only durable lessons or reusable procedures.\n\n## Stop conditions\nDo not claim completion without concrete verification evidence. If a gate cannot run, report exactly why and what remains unverified.\n"
+  },
+  {
+    "slug": "gpt-agent-bug-hunter",
+    "metadata": {
+      "name": "GPT Agent Bug Hunter",
+      "description": "Root-cause debugging workflow with reproduction, tracing, minimal fix, regression proof, and failure learning.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "debugging",
+        "debug",
+        "bug",
+        "error",
+        "failure",
+        "root-cause",
+        "regression",
+        "loi",
+        "sua-loi",
+        "truy-nguoc",
+        "nguyen-nhan-goc"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.813Z",
+      "updated_at": "2026-08-21T22:03:57.664Z"
+    },
+    "content": "---\nname: GPT Agent Bug Hunter\ndescription: Root-cause debugging workflow with reproduction, tracing, minimal fix, regression proof, and failure learning.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"debugging\", \"debug\", \"bug\", \"error\", \"failure\", \"root-cause\", \"regression\", \"loi\", \"sua-loi\", \"truy-nguoc\", \"nguyen-nhan-goc\"]\n---\n\n# GPT Agent Bug Hunter\n\nUse for runtime failures, flaky behavior, incorrect outputs, regressions, and integration bugs.\n\n## Protocol\n1. Reproduce when reasonably possible and capture the smallest reliable failure signal.\n2. Inspect logs, process state, ports, HTTP responses, configuration, dependency versions, and recent diffs relevant to the failure.\n3. Trace the actual failing path through callers and callees. Use debugger/DAP for stateful failures and runtime/HTTP evidence for observable behavior.\n4. Form competing hypotheses and kill them with evidence; do not patch the first suspicious line.\n5. Fix the root cause with the smallest change that restores the intended invariant.\n6. Add or strengthen a regression test when the project supports tests.\n7. Re-run the original reproduction, the regression test, and relevant neighboring checks.\n8. Review the final diff for symptom-masking, swallowed errors, weakened validation, race conditions, and accidental behavior changes.\n9. Persist a durable root-cause lesson when it can prevent the same class of failure later.\n\nNever declare a bug fixed solely because code compiles or one happy-path test passes.\n"
+  },
+  {
+    "slug": "gpt-agent-change-impact-mapper",
+    "metadata": {
+      "name": "GPT Agent Change Impact Mapper",
+      "description": "Interface and dependency impact analysis before changing APIs, schemas, config, shared types, or cross-module behavior.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "impact-analysis",
+        "impact",
+        "api",
+        "schema",
+        "dependencies",
+        "dependency",
+        "interface",
+        "anh-huong",
+        "phu-thuoc",
+        "giao-dien"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.816Z",
+      "updated_at": "2026-08-21T22:03:57.676Z"
+    },
+    "content": "---\nname: GPT Agent Change Impact Mapper\ndescription: Interface and dependency impact analysis before changing APIs, schemas, config, shared types, or cross-module behavior.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"impact-analysis\", \"impact\", \"api\", \"schema\", \"dependencies\", \"dependency\", \"interface\", \"anh-huong\", \"phu-thuoc\", \"giao-dien\"]\n---\n\n# GPT Agent Change Impact Mapper\n\nUse before touching public interfaces, shared types, schemas, persistence formats, configuration, or infrastructure contracts.\n\n## Checklist\n- Find definitions and all known references/call sites.\n- Identify serializers, validators, tests, mocks, fixtures, migrations, docs, generated code, consumers, and deployment/config dependencies.\n- Separate compile-time coupling from runtime/data compatibility.\n- Preserve backward compatibility by default.\n- For migrations, define forward and rollback behavior plus partial-failure handling.\n- For config changes, verify defaults and every environment that reads the field.\n- After editing, repeat the reference search to catch missed consumers.\n\nEscalate risk when auth/security, data migration, deployment, dependency lockfiles, or public API surfaces are involved.\n"
+  },
+  {
+    "slug": "gpt-agent-verification-gate",
+    "metadata": {
+      "name": "GPT Agent Verification Gate",
+      "description": "Deterministic completion gate for formatter, lint, typecheck, tests, build, runtime/browser verification, and diff review.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "verification",
+        "verify",
+        "validate",
+        "qa",
+        "tests",
+        "test",
+        "build",
+        "kiem-tra",
+        "xac-minh",
+        "kiem-thu"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.818Z",
+      "updated_at": "2026-08-21T22:03:57.679Z"
+    },
+    "content": "---\nname: GPT Agent Verification Gate\ndescription: Deterministic completion gate for formatter, lint, typecheck, tests, build, runtime/browser verification, and diff review.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"verification\", \"verify\", \"validate\", \"qa\", \"tests\", \"test\", \"build\", \"kiem-tra\", \"xac-minh\", \"kiem-thu\"]\n---\n\n# GPT Agent Verification Gate\n\nCompletion requires evidence, not confidence.\n\n## Order\n1. Syntax/parse checks for directly edited files when cheap.\n2. Project formatter check if it has a non-mutating check mode.\n3. Lint/static analysis.\n4. Typecheck/compiler diagnostics.\n5. Focused tests for the changed behavior.\n6. Broader relevant tests.\n7. Build/bundle when changes can affect compilation or packaging.\n8. Runtime, HTTP, browser, debugger, or database verification when behavior is observable only at runtime.\n9. Final diff and changed-file risk review.\n\nUse the project's own scripts and conventions. Do not invent a formatter/linter command when project metadata does not support it. Record failed gates verbatim and distinguish code failures from environment/tooling failures.\n"
+  },
+  {
+    "slug": "gpt-agent-adversarial-reviewer",
+    "metadata": {
+      "name": "GPT Agent Adversarial Reviewer",
+      "description": "Final code-review pass focused on correctness, regressions, security, concurrency, data integrity, and edge-case risk without endless nitpicking.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "review",
+        "security",
+        "quality",
+        "regression",
+        "correctness",
+        "ra-soat",
+        "bao-mat",
+        "hoi-quy"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.821Z",
+      "updated_at": "2026-08-21T22:03:57.683Z"
+    },
+    "content": "---\nname: GPT Agent Adversarial Reviewer\ndescription: Final code-review pass focused on correctness, regressions, security, concurrency, data integrity, and edge-case risk without endless nitpicking.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"review\", \"security\", \"quality\", \"regression\", \"correctness\", \"ra-soat\", \"bao-mat\", \"hoi-quy\"]\n---\n\n# GPT Agent Adversarial Reviewer\n\nUse after implementation, before declaring success.\n\n## Review priority\nP0 data loss/security breach > P1 incorrect core behavior > P2 likely regression/performance/concurrency issue > P3 maintainability/nits.\n\nInspect the actual diff and ask:\n- Can malformed, missing, duplicate, concurrent, partial, or stale inputs break invariants?\n- Did authorization, validation, escaping, secret handling, filesystem containment, or command execution become weaker?\n- Are errors preserved and surfaced correctly?\n- Are retries/idempotency/atomicity needed?\n- Did interface changes update every consumer?\n- Are tests proving the intended behavior rather than implementation details?\n- Did the change accidentally expand scope?\n\nStop once P0-P2 concerns are resolved or explicitly reported. Do not turn low-value stylistic possibilities into an infinite review loop.\n"
+  },
+  {
+    "slug": "gpt-agent-context-keeper",
+    "metadata": {
+      "name": "GPT Agent Context Keeper",
+      "description": "Long-horizon coding context discipline using .gpt-agent durable state, bounded project context, checkpoints, and concise handoff evidence.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "context",
+        "state",
+        "memory",
+        "project-state",
+        "long-horizon",
+        "ngu-canh",
+        "trang-thai",
+        "bo-nho",
+        "du-an"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.825Z",
+      "updated_at": "2026-08-21T22:03:57.708Z"
+    },
+    "content": "---\nname: GPT Agent Context Keeper\ndescription: Long-horizon coding context discipline using .gpt-agent durable state, bounded project context, checkpoints, and concise handoff evidence.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"context\", \"state\", \"memory\", \"project-state\", \"long-horizon\", \"ngu-canh\", \"trang-thai\", \"bo-nho\", \"du-an\"]\n---\n\n# GPT Agent Context Keeper\n\nUse on long-running repositories and multi-stage work.\n\n## Rules\n- At entry, load relevant .gpt-agent state plus project instruction files before asking the user to repeat known context.\n- Keep project purpose/constraints in PROJECT.md, architecture in ARCHITECTURE.md, current implementation state in CURRENT_STATE.md, important decisions in DECISIONS.md, and remaining work in TODO.md.\n- Update durable state after meaningful implementation changes, not after every trivial edit.\n- Save concise evidence: what changed, why, validation run, failures, and unresolved risks.\n- Prefer summaries over dumping logs into durable state.\n- Keep secrets and transient credentials out of project memory.\n\nThe repository and durable project files outrank conversational recollection when they conflict.\n"
+  },
+  {
+    "slug": "gpt-agent-autonomous-repair-loop",
+    "metadata": {
+      "name": "GPT Agent Autonomous Repair Loop",
+      "description": "Bounded self-correction loop for failed validation: diagnose, repair, re-run, and stop on proof or explicit blocker.",
+      "version": "1.2.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "autonomy",
+        "repair",
+        "validation-failure",
+        "retry",
+        "fix-failing-test",
+        "sua",
+        "sua-loi",
+        "that-bai",
+        "kiem-tra-loi"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-08T14:42:14.828Z",
+      "updated_at": "2026-08-21T22:03:57.711Z"
+    },
+    "content": "---\nname: GPT Agent Autonomous Repair Loop\ndescription: Bounded self-correction loop for failed validation: diagnose, repair, re-run, and stop on proof or explicit blocker.\nversion: 1.2.0\ncreated_by: agent\ntags: [\"coding\", \"autonomy\", \"repair\", \"validation-failure\", \"retry\", \"fix-failing-test\", \"sua\", \"sua-loi\", \"that-bai\", \"kiem-tra-loi\"]\n---\n\n# GPT Agent Autonomous Repair Loop\n\nUse when a validation gate fails after an implementation.\n\n## Loop\n1. Classify the failure: product bug, regression introduced by the edit, pre-existing failure, environment/tooling problem, flaky test, or insufficient permissions.\n2. Read the exact failing output and inspect only the relevant code/config first.\n3. If the edit caused it, repair the root cause and re-run the narrow failing gate.\n4. Once narrow verification passes, resume the broader gate sequence.\n5. Persist a reusable lesson only if it generalizes beyond the current one-off failure.\n\n## Bounds\nDo not loop blindly. After repeated failures with no new evidence, stop changing code, summarize the blocker and preserved evidence. Never weaken tests, validation, authentication, or security controls merely to turn a gate green.\n"
+  },
+  {
+    "slug": "gpt-agent-learning-loop",
+    "metadata": {
+      "name": "GPT Agent Learning Loop",
+      "description": "Closed-loop learning with automatic task/outcome capture, empirical skill feedback, evidence-backed candidates, scoped memory, and semantic promotion.",
+      "version": "1.3.0",
+      "created_by": "agent",
+      "tags": [
+        "coding",
+        "learning",
+        "learn",
+        "memory",
+        "self-learning",
+        "hermes",
+        "skill",
+        "retrieval",
+        "tu-hoc",
+        "hoc",
+        "bo-nho",
+        "ky-nang",
+        "ghi-nho",
+        "truy-xuat"
+      ],
+      "pinned": true,
+      "created_at": "2026-08-20T09:55:22.939Z",
+      "updated_at": "2026-08-21T22:03:57.714Z"
+    },
+    "content": "---\nname: GPT Agent Learning Loop\ndescription: Closed-loop learning with automatic task/outcome capture, empirical skill feedback, evidence-backed candidates, scoped memory, and semantic promotion.\nversion: 1.3.0\ncreated_by: agent\ntags: [\"coding\", \"learning\", \"learn\", \"memory\", \"self-learning\", \"hermes\", \"skill\", \"retrieval\", \"feedback\", \"evolution\", \"tu-hoc\", \"hoc\", \"bo-nho\", \"ky-nang\", \"ghi-nho\", \"truy-xuat\"]\n---\n\n# GPT Agent Learning Loop\n\nUse on every non-trivial coding task and explicit user correction. GPT Agent remains model-driven for semantic judgment, but the Go runtime now captures task/outcome evidence automatically.\n\n## Entry\n1. Start non-trivial coding work with `gpt_agent_coding_brief` for the exact project and task. This opens a durable automatic learning session.\n2. Apply relevant project/global memories and inspect `learning.candidates` plus `learning.similarOutcomes`.\n3. Follow selected `SKILL.md` procedures. Their ranking is automatically adjusted by verified success/failure/correction history.\n\n## Automatic capture\nAfter the brief starts, the runtime records bounded non-secret evidence from later tool calls: success/error class, project mutation, verification pass/fail, and selected skills. It never stores raw tool arguments or raw tool results in the evolution state.\n\nWhen the next task begins, the prior task is finalized as `verified`, `failed`, `corrected`, or `incomplete`. Repeated failures/corrections, successful repair sequences, and recurring tasks create evidence-backed learning candidates automatically. State persists across runtime restarts.\n\n## Semantic promotion\nAutomatic evidence is not a substitute for semantic reasoning. When a candidate contains a genuinely durable reusable lesson, use `gpt_agent_learn` to promote it into project/global memory or update a procedural skill. Do not manufacture a lesson merely to increase counters.\n\n## Never persist\nSecrets, tokens, passwords, private keys, raw credentials, transient logs, temporary PIDs, raw one-off tool output, guesses, or unverified hypotheses.\n\nA learning loop is healthy when future briefs retrieve relevant durable memory, similar verified outcomes, and better-ranked skills without requiring the model to remember every previous session manually."
+  }
+]
