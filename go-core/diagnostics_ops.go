@@ -443,19 +443,24 @@ func (n *nativeTools) selfCheckTool(ctx context.Context, raw json.RawMessage) (m
 
 	readyStatus := 0
 	tunnelURL := firstNonEmpty(os.Getenv("GPT_AGENT_TUNNEL_READY_URL"), "http://127.0.0.1:8080/readyz")
-	tunnelCtx, tunnelCancel := context.WithTimeout(ctx, 5*time.Second)
-	if req, err := http.NewRequestWithContext(tunnelCtx, http.MethodGet, tunnelURL, nil); err == nil {
-		if resp, err := (&http.Client{Timeout: 5 * time.Second}).Do(req); err == nil {
-			readyStatus = resp.StatusCode
-			_ = resp.Body.Close()
+	tunnelURLAllowed := isLoopbackHTTPURL(tunnelURL)
+	if tunnelURLAllowed {
+		tunnelCtx, tunnelCancel := context.WithTimeout(ctx, 5*time.Second)
+		if req, err := http.NewRequestWithContext(tunnelCtx, http.MethodGet, tunnelURL, nil); err == nil {
+			if resp, err := loopbackOnlyHTTPClient(5 * time.Second).Do(req); err == nil {
+				readyStatus = resp.StatusCode
+				_ = resp.Body.Close()
+			}
 		}
+		tunnelCancel()
 	}
-	tunnelCancel()
 	if runtime.GOOS == "windows" {
 		taskCtx, taskCancel := context.WithTimeout(ctx, 5*time.Second)
 		code, _, _, _ := runCapture(taskCtx, "schtasks.exe", []string{"/Query", "/TN", "GPT Agent Tunnel", "/FO", "LIST"}, "", nil)
 		taskCancel()
-		if code != 0 && readyStatus == 0 {
+		if !tunnelURLAllowed {
+			push("tunnel", "fail", map[string]any{"reason": "Tunnel ready URL must use an HTTP(S) loopback host."})
+		} else if code != 0 && readyStatus == 0 {
 			push("tunnel", "skip", map[string]any{"reason": "GPT Agent Tunnel scheduled task is not installed"})
 		} else {
 			s := "fail"

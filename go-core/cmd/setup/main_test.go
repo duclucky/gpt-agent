@@ -77,3 +77,16 @@ func TestSetupPageHasAccessibleLiveStatus(t *testing.T) {
 		t.Fatal("setup wizard dynamic status must be exposed as a polite live status region")
 	}
 }
+
+func TestSetupProbeURLMustBeLoopback(t *testing.T) {
+	for _, raw := range []string{"http://127.0.0.1:8765/healthz", "https://localhost:9443/readyz", "http://[::1]:8765/readyz"} {
+		if !isLoopbackProbeURL(raw) {
+			t.Fatalf("loopback probe URL rejected: %s", raw)
+		}
+	}
+	for _, raw := range []string{"https://example.com/readyz", "file:///tmp/readyz", "http://10.0.0.1/readyz"} {
+		if isLoopbackProbeURL(raw) {
+			t.Fatalf("non-loopback probe URL accepted: %s", raw)
+		}
+	}
+}

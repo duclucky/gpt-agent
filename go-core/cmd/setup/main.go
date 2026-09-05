@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -424,19 +425,44 @@ func waitTunnelReady(ctx context.Context, healthURLFile string, max time.Duratio
 }
 
 func probeHTTP(parent context.Context, url string) bool {
+	if !isLoopbackProbeURL(url) {
+		return false
+	}
 	ctx, cancel := context.WithTimeout(parent, 2*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return false
 	}
-	resp, err := (&http.Client{Timeout: 2 * time.Second}).Do(req)
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 || !isLoopbackProbeURL(req.URL.String()) {
+				return errors.New("HTTP redirect left the loopback boundary")
+			}
+			return nil
+		},
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return false
 	}
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4<<10))
 	return resp.StatusCode == http.StatusOK
+}
+
+func isLoopbackProbeURL(raw string) bool {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return false
+	}
+	host := strings.TrimSpace(u.Hostname())
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func readTunnelID(profile string) string {

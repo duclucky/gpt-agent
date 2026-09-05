@@ -770,14 +770,25 @@ func (n *nativeTools) httpRequestTool(ctx context.Context, raw json.RawMessage) 
 	if !n.allowedURL(u) {
 		return nil, fmt.Errorf("HTTP host blocked. Allowed: %s", strings.Join(n.cfg.Security.HTTPAllowedHosts, ", "))
 	}
-	req, err := http.NewRequestWithContext(ctx, a.Method, a.URL, strings.NewReader(a.Body))
+	req, err := http.NewRequestWithContext(ctx, a.Method, u.String(), strings.NewReader(a.Body))
 	if err != nil {
 		return nil, err
 	}
 	for k, v := range a.Headers {
 		req.Header.Set(k, v)
 	}
-	client := &http.Client{Timeout: time.Duration(a.TimeoutMS) * time.Millisecond}
+	client := &http.Client{
+		Timeout: time.Duration(a.TimeoutMS) * time.Millisecond,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return errors.New("HTTP redirect limit exceeded")
+			}
+			if !n.allowedURL(req.URL) {
+				return fmt.Errorf("HTTP redirect host blocked. Allowed: %s", strings.Join(n.cfg.Security.HTTPAllowedHosts, ", "))
+			}
+			return nil
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -805,6 +816,34 @@ func (n *nativeTools) allowedURL(u *url.URL) bool {
 		}
 	}
 	return false
+}
+
+func isLoopbackHTTPURL(raw string) bool {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return false
+	}
+	host := strings.TrimSpace(u.Hostname())
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+func loopbackOnlyHTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Timeout: timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return errors.New("HTTP redirect limit exceeded")
+			}
+			if !isLoopbackHTTPURL(req.URL.String()) {
+				return errors.New("HTTP redirect left the loopback boundary")
+			}
+			return nil
+		},
+	}
 }
 
 func (n *nativeTools) waitPortTool(ctx context.Context, raw json.RawMessage) (map[string]any, error) {
