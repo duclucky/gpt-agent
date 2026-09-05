@@ -535,6 +535,9 @@ type rgJSONEvent struct {
 }
 
 func (n *nativeTools) searchText(ctx context.Context, workspaceID, relativePath, query, glob string, maxResults int, regexMode, caseSensitive bool) (map[string]any, error) {
+	if maxResults < 1 || maxResults > 1000 {
+		return nil, nativeToolError{"maxResults must be between 1 and 1000"}
+	}
 	if n.rgPath == "" {
 		return n.searchTextGoFallback(ctx, workspaceID, relativePath, query, glob, maxResults, regexMode, caseSensitive)
 	}

@@ -74,3 +74,18 @@ func TestLoopbackHTTPURLValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestSearchTextRejectsOversizedMaxResults(t *testing.T) {
+	native := testNativeTools(t, t.TempDir())
+	if _, err := native.searchText(context.Background(), "test", ".", "x", "", 1001, false, false); err == nil {
+		t.Fatal("searchText accepted maxResults above the runtime limit")
+	}
+}
+
+func TestFastContextRejectsOversizedBounds(t *testing.T) {
+	native := testNativeTools(t, t.TempDir())
+	raw := json.RawMessage(`{"workspaceId":"test","path":".","maxResultsPerQuery":100000,"maxFileChars":12000,"maxMapFiles":80}`)
+	if _, err := native.fastContextTool(context.Background(), raw); err == nil {
+		t.Fatal("fastContext accepted an oversized maxResultsPerQuery")
+	}
+}

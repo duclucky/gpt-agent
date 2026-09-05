@@ -794,6 +794,15 @@ func (n *nativeTools) fastContextTool(ctx context.Context, raw json.RawMessage) 
 	if a.MaxMapFiles == 0 {
 		a.MaxMapFiles = 80
 	}
+	if a.MaxResultsPerQuery < 1 || a.MaxResultsPerQuery > 200 {
+		return nil, nativeToolError{"maxResultsPerQuery must be between 1 and 200"}
+	}
+	if a.MaxFileChars < 1000 || a.MaxFileChars > 50000 {
+		return nil, nativeToolError{"maxFileChars must be between 1000 and 50000"}
+	}
+	if a.MaxMapFiles < 1 || a.MaxMapFiles > 200 {
+		return nil, nativeToolError{"maxMapFiles must be between 1 and 200"}
+	}
 	a.Queries = uniqueLimited(a.Queries, 8)
 	a.Files = uniqueLimited(a.Files, 12)
 	var project map[string]any

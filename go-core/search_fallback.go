@@ -51,6 +51,9 @@ func searchGlobMatches(glob, rel, base string) bool {
 }
 
 func (n *nativeTools) searchTextGoFallback(ctx context.Context, workspaceID, relativePath, query, glob string, maxResults int, regexMode, caseSensitive bool) (map[string]any, error) {
+	if maxResults < 1 || maxResults > 1000 {
+		return nil, nativeToolError{"maxResults must be between 1 and 1000"}
+	}
 	ws, _, searchRoot, err := n.resolveWorkspacePath(workspaceID, relativePath)
 	if err != nil {
 		return nil, err
