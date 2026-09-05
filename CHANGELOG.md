@@ -4,6 +4,18 @@ All notable changes to GPT Agent are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Updated GitHub Actions dependencies and `golang.org/x/sys` through verified dependency maintenance.
+- Added weekly Dependabot update configuration for Go modules and GitHub Actions.
+
+### Security
+
+- Revalidate every HTTP redirect against the configured host allowlist and keep setup/diagnostic health probes on HTTP(S) loopback addresses.
+- Enforce runtime bounds for internal search/context limits instead of relying only on tool schema validation.
+- Validate background process IDs before filesystem use and derive process log paths from validated IDs rather than stored metadata.
+- Canonically contain distribution-manifest entries under the application root before reading files.
+
 ### Planned
 
 - Ongoing setup UX, documentation, verification, and security hardening.
