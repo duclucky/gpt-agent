@@ -1,5 +1,9 @@
 # GPT Agent
 
+[![CI](https://github.com/duclucky/gpt-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/duclucky/gpt-agent/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/duclucky/gpt-agent)](https://github.com/duclucky/gpt-agent/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **GPT Agent** is a local developer runtime for ChatGPT on Windows. It gives ChatGPT controlled access to your codebase, Git, terminal, language servers, debugger, SQLite tools, local HTTP services, reusable project memory, checkpoints, audit logs, and Windows Sandbox-backed command execution.
 
 > Independent community project. Not an official OpenAI product and not affiliated with or endorsed by OpenAI.
@@ -9,6 +13,10 @@
 GPT Agent is intentionally **ChatGPT-only**. It does not embed a second coding agent, model router, external coding harness, or model-provider gateway. ChatGPT remains the reasoning/agent loop; GPT Agent is the local execution layer.
 
 The Windows v0.1.0 build exposes **83 MCP tools**: 79 native tools plus 4 bounded async job tools.
+
+**[Download the latest Windows release](https://github.com/duclucky/gpt-agent/releases/latest)**
+
+Installation guide: [docs/INSTALL-ONCE.md](docs/INSTALL-ONCE.md)
 
 ## Architecture
 
@@ -79,6 +87,14 @@ The setup wizard binds only to `127.0.0.1` on a random port and uses a one-time 
 
 See [docs/CONNECT-CHATGPT.md](docs/CONNECT-CHATGPT.md) for the full flow.
 
+## Recommended ChatGPT setup
+
+For ongoing engineering work, use GPT Agent inside a **ChatGPT Project** rather than a standalone one-off chat. Projects keep related chats, reference files, and Project Instructions together, which makes the engineering rules and repository context easier to reuse across sessions.
+
+After connecting the Tunnel, create/open a ChatGPT Project for the codebase and add a small set of engineering rules under **Project settings → Project Instructions**.
+
+See [Recommended ChatGPT Project setup](docs/PROJECT-INSTRUCTIONS.md) for a ready-to-paste public-safe Project Instructions template.
+
 ## Security defaults
 
 - MCP server binds only to loopback.
@@ -116,10 +132,21 @@ The builder runs tests, vet, PowerShell syntax checks, a legacy/secret hygiene g
 
 - [Install once](docs/INSTALL-ONCE.md)
 - [Connect ChatGPT](docs/CONNECT-CHATGPT.md)
+- [Recommended ChatGPT Project setup](docs/PROJECT-INSTRUCTIONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Tool catalog](docs/TOOL-CATALOG.md)
 - [Windows runtime](docs/WINDOWS-NATIVE.md)
 - [Security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Roadmap](ROADMAP.md)
+
+## Maintainer and support
+
+- Maintainer: [@duclucky](https://github.com/duclucky)
+- Bugs: use the [bug report form](https://github.com/duclucky/gpt-agent/issues/new?template=bug_report.yml).
+- Feature requests: use the [feature request form](https://github.com/duclucky/gpt-agent/issues/new?template=feature_request.yml).
+- Security vulnerabilities: report them privately through [GitHub Private Vulnerability Reporting](https://github.com/duclucky/gpt-agent/security/advisories/new). Do not open a public security issue.
 
 ## License
 

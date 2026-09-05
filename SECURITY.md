@@ -44,7 +44,21 @@ Windows Sandbox can improve containment for untrusted commands, but GPT Agent is
 
 ## Reporting a vulnerability
 
-Do not include real API keys, tokens, credentials, private repository contents, or user data in a public issue. For a private repository, report security problems privately to the repository owner. Before making the repository public, configure a dedicated private security contact or GitHub private vulnerability reporting.
+Report security vulnerabilities privately through **GitHub Private Vulnerability Reporting**:
+
+https://github.com/duclucky/gpt-agent/security/advisories/new
+
+Do **not** open a public issue for a suspected vulnerability.
+
+When reporting a vulnerability:
+
+- describe the affected version and component;
+- provide the smallest safe reproduction you can;
+- explain the expected security boundary and the observed behavior;
+- redact API keys, tokens, credentials, private repository contents, usernames, private paths, and other sensitive machine data;
+- never upload real secrets merely to prove that a leak is possible.
+
+For ordinary bugs and feature requests that are not security-sensitive, use the repository issue forms.
 
 ## Release hygiene
 

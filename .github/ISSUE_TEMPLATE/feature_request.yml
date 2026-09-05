@@ -1,0 +1,69 @@
+name: Feature request
+description: Suggest an improvement to the public GPT Agent runtime
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem first, then the proposed solution. Do not include secrets, private endpoints, credentials, or private repository content.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem or limitation are you trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the workflow or behavior you would like GPT Agent to provide.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Installation / onboarding
+        - ChatGPT / Tunnel connection
+        - MCP runtime / tools
+        - Git / filesystem
+        - Terminal / process execution
+        - LSP / debugger
+        - SQLite / HTTP
+        - Windows Sandbox
+        - Packaging / release
+        - Documentation / contributor experience
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workarounds or alternative designs have you considered?
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and privacy impact
+      description: Note any effect on workspace access, credentials, network access, shell execution, local data, or trust boundaries.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for a similar request.
+          required: true
+        - label: This request is for the public GPT Agent product scope.
+          required: true
+        - label: I did not include secrets, credentials, private endpoints, or sensitive repository data.
+          required: true

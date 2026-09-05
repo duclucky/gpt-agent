@@ -71,3 +71,9 @@ func TestAuthorizedRequiresLoopbackTokenAndSameOrigin(t *testing.T) {
 		t.Fatal("cross-origin request should be rejected")
 	}
 }
+
+func TestSetupPageHasAccessibleLiveStatus(t *testing.T) {
+	if !strings.Contains(setupHTML, `role="status"`) || !strings.Contains(setupHTML, `aria-live="polite"`) {
+		t.Fatal("setup wizard dynamic status must be exposed as a polite live status region")
+	}
+}

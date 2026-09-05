@@ -63,6 +63,12 @@ In ChatGPT:
 
 Once connected, ChatGPT can discover the GPT Agent MCP tools through the tunnel.
 
+### Recommended: use a ChatGPT Project
+
+For ongoing repository work, create or open a ChatGPT Project and run your GPT Agent chats there. A Project keeps related chats, reference files, and Project Instructions together, which reduces repeated setup and makes engineering rules easier to reuse across sessions.
+
+Use the ready-to-paste template in [PROJECT-INSTRUCTIONS.md](PROJECT-INSTRUCTIONS.md), then customize it for the repository.
+
 ## Troubleshooting
 
 Check the local runtime:

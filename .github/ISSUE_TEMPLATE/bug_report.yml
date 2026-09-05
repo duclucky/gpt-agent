@@ -1,0 +1,92 @@
+name: Bug report
+description: Report a reproducible problem in GPT Agent
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not include API keys, tokens, credentials, private repository contents, or other sensitive data. For security vulnerabilities, use GitHub Private Vulnerability Reporting instead of this form.
+
+  - type: input
+    id: version
+    attributes:
+      label: GPT Agent version
+      description: For example, v0.1.0.
+      placeholder: v0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Installation / setup wizard
+        - ChatGPT / Tunnel connection
+        - MCP runtime / tools
+        - Git / filesystem
+        - Terminal / process execution
+        - LSP / debugger
+        - SQLite / HTTP
+        - Windows Sandbox
+        - Packaging / release
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and impact.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable reproduction you can.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Relevant diagnostics
+      description: Paste only redacted, non-sensitive logs or error messages. Remove usernames, private paths, repository content, tokens, credentials, and secrets.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: I removed secrets, credentials, private repository contents, and sensitive machine data from this report.
+          required: true
+        - label: This is not a security vulnerability. Security issues must be reported privately.
+          required: true
