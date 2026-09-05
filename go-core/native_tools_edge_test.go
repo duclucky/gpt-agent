@@ -89,3 +89,14 @@ func TestFastContextRejectsOversizedBounds(t *testing.T) {
 		t.Fatal("fastContext accepted an oversized maxResultsPerQuery")
 	}
 }
+
+func TestProcessStatusRejectsTraversalID(t *testing.T) {
+	native := testNativeTools(t, t.TempDir())
+	outside := filepath.Join(native.dataRoot, "escape.json")
+	if err := os.WriteFile(outside, []byte(`{"id":"escape","status":"running"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := native.processes.status("../escape"); err == nil || !strings.Contains(err.Error(), "Invalid process id") {
+		t.Fatalf("process traversal id was not rejected: %v", err)
+	}
+}

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
@@ -39,8 +40,17 @@ type processManager struct {
 	sandboxMu sync.Mutex
 }
 
+var processIDRE = regexp.MustCompile(`^proc_[0-9a-f]{16}$`)
+
 func newProcessManager(n *nativeTools) *processManager {
 	return &processManager{n: n, live: map[string]*managedProcess{}}
+}
+
+func validateProcessID(id string) error {
+	if !processIDRE.MatchString(id) {
+		return fmt.Errorf("Invalid process id: %s", id)
+	}
+	return nil
 }
 
 func executableName(exe string) string {
@@ -351,6 +361,9 @@ func (p *processManager) startSafe(workspaceID, cwd, executable string, args []s
 	return cloneMap(meta), nil
 }
 func (p *processManager) status(id string) (map[string]any, error) {
+	if err := validateProcessID(id); err != nil {
+		return nil, err
+	}
 	p.mu.Lock()
 	if cur := p.live[id]; cur != nil {
 		v := cloneMap(cur.Meta)
@@ -378,7 +391,8 @@ func (p *processManager) logs(id string, tail int) (map[string]any, error) {
 	if tail > 160000 {
 		tail = 160000
 	}
-	buf, _ := os.ReadFile(fmt.Sprint(meta["logPath"]))
+	logPath := filepath.Join(p.n.dataRoot, "processes", id+".log")
+	buf, _ := os.ReadFile(logPath)
 	text := string(buf)
 	units := []rune(text)
 	if len(units) > tail {

@@ -1066,7 +1066,8 @@
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
         "processId": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^proc_[0-9a-f]{16}$"
         }
       },
       "required": [
@@ -1087,7 +1088,8 @@
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
         "processId": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^proc_[0-9a-f]{16}$"
         },
         "tailChars": {
           "default": 30000,
@@ -1116,7 +1118,8 @@
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
         "processId": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^proc_[0-9a-f]{16}$"
         }
       },
       "required": [
