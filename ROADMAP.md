@@ -12,8 +12,9 @@ This roadmap describes current priorities, not guaranteed dates or release commi
 
 ### Reliability and verification
 
-- Expand regression coverage for filesystem, Git, process, async-job, LSP, debugger, and runtime edge cases.
+- Expand regression coverage for filesystem, Git, process, async-job, LSP, debugger, runtime, and self-learning edge cases.
 - Strengthen deterministic verification and recovery paths for long-running local operations.
+- Keep adaptive learning evidence bounded, reviewable, project-scoped, and resistant to stale/noisy promotion.
 - Keep release packaging reproducible and auditable.
 
 ### Security hardening

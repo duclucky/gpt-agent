@@ -106,7 +106,7 @@ The query tool accepts read-only forms such as SELECT, PRAGMA, EXPLAIN, and WITH
 - `gpt_agent_learning_stats`
 - `gpt_agent_learn`
 
-The learning layer is for durable, verified project context and reusable procedures. Credentials and transient secrets should never be persisted there.
+The learning layer is for durable, verified project context and reusable procedures. `gpt_agent_coding_brief` opens an automatic learning session and returns pending evidence candidates plus similar prior outcomes. Review candidates before persisting anything: use `gpt_agent_learn` with `candidateIds` when promoting durable learning, or `dismissCandidateIds` for reviewed noise/stale evidence. Credentials, raw tool arguments/results, and transient secrets should never be persisted there. See [SELF-LEARNING.md](SELF-LEARNING.md).
 
 ## Diagnostics and audit
 

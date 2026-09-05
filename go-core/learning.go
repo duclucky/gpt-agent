@@ -21,7 +21,7 @@ import (
 //go:embed coding_skill_pack.json
 var embeddedCodingSkillPack []byte
 
-const codingSkillPackVersion = "1.3.0"
+const codingSkillPackVersion = "1.4.0"
 
 type memoryEntry struct {
 	ID          string   `json:"id"`

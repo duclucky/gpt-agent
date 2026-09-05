@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"path/filepath"
 	"regexp"
@@ -97,6 +98,8 @@ type learningEvolution struct {
 }
 
 var learningSecretAssignment = regexp.MustCompile(`(?i)\b(api[_-]?key|access[_-]?token|refresh[_-]?token|token|password|passwd|secret|private[_-]?key)\s*[:=]\s*([^\s,;]+)`)
+var learningAuthorizationBearer = regexp.MustCompile(`(?i)\b(authorization\s*[:=]\s*bearer)\s+[^\s,;]+`)
+var learningKnownToken = regexp.MustCompile(`(?i)\b(?:sk-|rk-|ghp_|github_pat_|xox[baprs]-)[A-Za-z0-9_\-]{8,}`)
 var learningPrivateKeyBlock = regexp.MustCompile(`(?is)-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----.*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----`)
 
 func newLearningEvolution(dataRoot string) *learningEvolution {
@@ -127,7 +130,9 @@ func sanitizeLearningTask(task string) string {
 		return ""
 	}
 	v = learningPrivateKeyBlock.ReplaceAllString(v, "[REDACTED_PRIVATE_KEY]")
+	v = learningAuthorizationBearer.ReplaceAllString(v, `$1 [REDACTED]`)
 	v = learningSecretAssignment.ReplaceAllString(v, `$1=[REDACTED]`)
+	v = learningKnownToken.ReplaceAllString(v, "[REDACTED_TOKEN]")
 	runes := []rune(v)
 	if len(runes) > 1800 {
 		v = string(runes[:1800]) + "…"
@@ -578,6 +583,90 @@ func (e *learningEvolution) upsertCandidateLocked(kind string, h learningTaskOut
 	}
 }
 
+func candidateIDSet(items []string) map[string]bool {
+	out := map[string]bool{}
+	for _, item := range items {
+		if v := strings.TrimSpace(item); v != "" {
+			out[v] = true
+		}
+	}
+	return out
+}
+
+func (e *learningEvolution) validateCandidateResolution(scope string, promotedIDs, dismissedIDs []string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.validateCandidateResolutionLocked(normalizeScope(scope), candidateIDSet(promotedIDs), candidateIDSet(dismissedIDs))
+}
+
+func (e *learningEvolution) validateCandidateResolutionLocked(scope string, promoted, dismissed map[string]bool) error {
+	for id := range promoted {
+		if dismissed[id] {
+			return fmt.Errorf("candidate cannot be both promoted and dismissed: %s", id)
+		}
+	}
+	wanted := map[string]bool{}
+	for id := range promoted {
+		wanted[id] = true
+	}
+	for id := range dismissed {
+		wanted[id] = true
+	}
+	if len(wanted) == 0 {
+		return nil
+	}
+	found := map[string]bool{}
+	for _, c := range e.db.Candidates {
+		if !wanted[c.ID] {
+			continue
+		}
+		if c.Scope != scope {
+			return fmt.Errorf("candidate belongs to a different learning scope: %s", c.ID)
+		}
+		if c.Status != "pending" {
+			return fmt.Errorf("candidate is already resolved: %s", c.ID)
+		}
+		found[c.ID] = true
+	}
+	for id := range wanted {
+		if !found[id] {
+			return fmt.Errorf("learning candidate not found: %s", id)
+		}
+	}
+	return nil
+}
+
+func (e *learningEvolution) resolveCandidates(scope string, promotedIDs, dismissedIDs []string) (map[string]any, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	scope = normalizeScope(scope)
+	promoted, dismissed := candidateIDSet(promotedIDs), candidateIDSet(dismissedIDs)
+	if err := e.validateCandidateResolutionLocked(scope, promoted, dismissed); err != nil {
+		return nil, err
+	}
+	now := nowISO()
+	promotedOut, dismissedOut := []string{}, []string{}
+	for i := range e.db.Candidates {
+		c := &e.db.Candidates[i]
+		switch {
+		case promoted[c.ID]:
+			c.Status = "promoted"
+			c.UpdatedAt = now
+			promotedOut = append(promotedOut, c.ID)
+		case dismissed[c.ID]:
+			c.Status = "dismissed"
+			c.UpdatedAt = now
+			dismissedOut = append(dismissedOut, c.ID)
+		}
+	}
+	if len(promotedOut)+len(dismissedOut) > 0 {
+		if err := e.saveLocked(); err != nil {
+			return nil, err
+		}
+	}
+	return map[string]any{"promoted": promotedOut, "dismissed": dismissedOut}, nil
+}
+
 func (e *learningEvolution) skillAdjustedScore(slug string, base float64) (float64, map[string]any) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -689,8 +778,11 @@ func (e *learningEvolution) stats() map[string]any {
 		counts[h.Outcome]++
 	}
 	pending := 0
+	candidateStatuses := map[string]int{}
 	for _, c := range e.db.Candidates {
-		if c.Status == "pending" {
+		status := firstNonEmpty(c.Status, "pending")
+		candidateStatuses[status]++
+		if status == "pending" {
 			pending++
 		}
 	}
@@ -702,6 +794,6 @@ func (e *learningEvolution) stats() map[string]any {
 	}
 	return map[string]any{
 		"enabled": true, "automaticCapture": true, "activeSession": active, "activeVerified": activeVerified,
-		"historyCount": len(e.db.History), "outcomes": counts, "pendingCandidates": pending, "skillOutcomeCount": len(e.db.Skills), "statePath": e.path,
+		"historyCount": len(e.db.History), "outcomes": counts, "pendingCandidates": pending, "candidateStatuses": candidateStatuses, "skillOutcomeCount": len(e.db.Skills), "statePath": e.path,
 	}
 }

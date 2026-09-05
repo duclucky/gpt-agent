@@ -168,8 +168,9 @@ func (n *nativeTools) codingSkillsInstallTool() (map[string]any, error) {
 }
 func (n *nativeTools) learnTool(ctx context.Context, raw json.RawMessage) (map[string]any, error) {
 	var a struct {
-		WorkspaceID, Path string
-		Memories          []struct {
+		WorkspaceID, Path                 string
+		CandidateIDs, DismissCandidateIDs []string
+		Memories                          []struct {
 			Content, Kind, Source string
 			Tags                  []string
 			Importance            float64
@@ -195,6 +196,14 @@ func (n *nativeTools) learnTool(ctx context.Context, raw json.RawMessage) (map[s
 		}
 		scope = projectLearningScopeNative(p)
 		project = map[string]any{"workspaceId": p["workspaceId"], "path": p["path"], "projectRoot": p["projectRoot"], "gitRoot": p["gitRoot"]}
+	}
+	if n.evolution == nil && (len(a.CandidateIDs) > 0 || len(a.DismissCandidateIDs) > 0) {
+		return nil, nativeToolError{"automatic learning evolution is unavailable"}
+	}
+	if n.evolution != nil {
+		if err := n.evolution.validateCandidateResolution(scope, a.CandidateIDs, a.DismissCandidateIDs); err != nil {
+			return nil, err
+		}
 	}
 	savedMem := []map[string]any{}
 	for _, m := range a.Memories {
@@ -232,7 +241,15 @@ func (n *nativeTools) learnTool(ctx context.Context, raw json.RawMessage) (map[s
 		}
 		savedSkills = append(savedSkills, v)
 	}
-	return map[string]any{"memories": savedMem, "skills": savedSkills, "scope": scope, "project": project}, nil
+	resolution := map[string]any{"promoted": []string{}, "dismissed": []string{}}
+	if n.evolution != nil {
+		resolved, err := n.evolution.resolveCandidates(scope, a.CandidateIDs, a.DismissCandidateIDs)
+		if err != nil {
+			return nil, err
+		}
+		resolution = resolved
+	}
+	return map[string]any{"memories": savedMem, "skills": savedSkills, "candidateResolution": resolution, "scope": scope, "project": project}, nil
 }
 func projectLearningScopeNative(project map[string]any) string {
 	root, _ := project["gitRoot"].(string)

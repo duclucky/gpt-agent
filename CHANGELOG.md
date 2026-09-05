@@ -8,6 +8,8 @@ All notable changes to GPT Agent are documented here.
 
 - Updated GitHub Actions dependencies and `golang.org/x/sys` through verified dependency maintenance.
 - Added weekly Dependabot update configuration for Go modules and GitHub Actions.
+- Upgraded the embedded Learning Loop skill pack to `1.4.0` with explicit candidate review lifecycle and clearer adaptive-learning guidance.
+- Added candidate resolution to `gpt_agent_learn`: reviewed evidence can be marked `promoted` or `dismissed` so resolved candidates do not keep resurfacing.
 
 ### Security
 
@@ -15,6 +17,7 @@ All notable changes to GPT Agent are documented here.
 - Enforce runtime bounds for internal search/context limits instead of relying only on tool schema validation.
 - Validate background process IDs before filesystem use and derive process log paths from validated IDs rather than stored metadata.
 - Canonically contain distribution-manifest entries under the application root before reading files.
+- Harden automatic-learning task sanitization for Bearer authorization values and common token prefixes; regression tests verify raw tool arguments/results are not persisted to evolution state.
 
 ### Planned
 

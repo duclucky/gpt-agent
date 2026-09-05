@@ -11,7 +11,7 @@ Use GPT Agent as the local execution and code-intelligence layer. ChatGPT is the
 4. Prefer specialized tools and `gpt_agent_run_command`; use `gpt_agent_full_shell` only when a time-bounded local grant is active and safer tools are insufficient.
 5. Use LSP, structural search, compiler/test/build checks, DAP, HTTP, SQLite, and process tools as appropriate to verify behavior.
 6. Review the final diff and risk signals. Do not claim completion without concrete verification evidence.
-7. Use `gpt_agent_learn` only for durable verified project facts, root-cause lessons, decisions, or reusable procedures.
+7. Review learning candidates before they repeat: use `gpt_agent_learn` with `candidateIds` only when promoting durable verified learning, or `dismissCandidateIds` for reviewed noise/stale evidence.
 ## Boundaries
 - Work only inside configured workspaces.
 - Never persist secrets, credentials, private keys, transient logs, guesses, or unverified hypotheses.

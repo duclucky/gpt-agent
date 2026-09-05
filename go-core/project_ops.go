@@ -754,7 +754,7 @@ func (n *nativeTools) codingBriefTool(ctx context.Context, raw json.RawMessage) 
 		"automaticCapture":         n.evolution != nil,
 		"completionReviewRequired": a.Task != "",
 		"tool":                     "gpt_agent_learn",
-		"rule":                     "Runtime automatically captures task/tool/verification outcomes and adapts skill ranking. Use gpt_agent_learn for semantic promotion when an evidence-backed candidate contains a durable reusable fact, decision, root-cause lesson, or skill improvement.",
+		"rule":                     "Runtime automatically captures task/tool/verification outcomes and adapts skill ranking. Review evidence-backed candidates: use gpt_agent_learn candidateIds when promoting durable reusable learning, or dismissCandidateIds for reviewed noise/stale evidence.",
 		"neverPersist":             []string{"secrets", "credentials", "transient logs", "temporary process state", "unverified hypotheses", "one-off command output"},
 	}
 	if n.evolution != nil && a.Task != "" {

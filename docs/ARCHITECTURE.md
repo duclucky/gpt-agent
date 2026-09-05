@@ -82,7 +82,11 @@ C:\GPTAgent\workspace\ default workspace if the user does not choose another
 
 ## Learning
 
-The learning layer stores curated project-scoped facts, decisions, lessons, and reusable procedural `SKILL.md` content. Automatic learning is bounded and is not intended to persist credentials, transient logs, guesses, or private chain-of-thought.
+The learning layer stores curated project-scoped facts, decisions, lessons, and reusable procedural `SKILL.md` content. `gpt_agent_coding_brief` opens a bounded evolution session that records outcome evidence such as mutations, verification passes/failures, broad failure classes, and selected skills. It does not persist raw tool arguments or raw tool results.
+
+Completed tasks become `verified`, `failed`, `corrected`, or `incomplete`. Evidence-backed candidates remain `pending` until semantic review. `gpt_agent_learn` can mark reviewed candidates `promoted` while saving durable memory/skill changes, or `dismissed` when the evidence is noise or too task-specific. Only pending candidates are returned in future coding briefs.
+
+Task text is sanitized before persistence. Automatic learning is bounded and is not intended to persist credentials, transient logs, guesses, or private chain-of-thought. See [SELF-LEARNING.md](SELF-LEARNING.md).
 
 ## Audit
 

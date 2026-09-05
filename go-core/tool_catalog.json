@@ -1558,7 +1558,7 @@
       "openWorldHint": false,
       "readOnlyHint": false
     },
-    "description": "Persist curated durable learning from a completed task or user correction. When workspaceId is provided, memories are automatically scoped to the actual project root so unrelated repositories do not contaminate retrieval.",
+    "description": "Persist curated durable learning from a completed task or user correction, and resolve reviewed evidence candidates as promoted or dismissed. Project-scoped learning stays isolated to the actual project root.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -1663,6 +1663,26 @@
         },
         "workspaceId": {
           "type": "string"
+        },
+        "candidateIds": {
+          "default": [],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 50,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "dismissCandidateIds": {
+          "default": [],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 50,
+          "type": "array",
+          "uniqueItems": true
         }
       },
       "type": "object"

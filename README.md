@@ -4,7 +4,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/duclucky/gpt-agent)](https://github.com/duclucky/gpt-agent/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**GPT Agent** is a local developer runtime for ChatGPT on Windows. It gives ChatGPT controlled access to your codebase, Git, terminal, language servers, debugger, SQLite tools, local HTTP services, reusable project memory, checkpoints, audit logs, and Windows Sandbox-backed command execution.
+**GPT Agent** is a local developer runtime for ChatGPT on Windows. It gives ChatGPT controlled access to your codebase, Git, terminal, language servers, debugger, SQLite tools, local HTTP services, adaptive project memory, reusable engineering skills, checkpoints, audit logs, and Windows Sandbox-backed command execution.
 
 > Independent community project. Not an official OpenAI product and not affiliated with or endorsed by OpenAI.
 
@@ -40,6 +40,18 @@ GPT Agent on 127.0.0.1:8765
 ```
 
 Browser automation is intentionally not included in v0.1.0. It will only be added when it has a complete independently distributable runtime.
+
+## Adaptive self-learning
+
+GPT Agent can learn from engineering outcomes without retraining or modifying ChatGPT model weights. The local runtime records bounded evidence about task success/failure, project mutations, verification results, corrections, and selected reusable skills.
+
+```text
+Task → evidence → outcome → candidate → semantic review → memory / skill → better next task
+```
+
+`gpt_agent_coding_brief` retrieves project-scoped memories, similar verified outcomes, and reusable `SKILL.md` procedures. Skill ranking is adjusted by verified success/failure/correction history. Evidence candidates stay `pending` until they are reviewed: promote durable learning through `gpt_agent_learn` with `candidateIds`, or close noise/stale evidence with `dismissCandidateIds`.
+
+The evolution state does **not** store raw tool arguments or raw tool results, and task text is sanitized before persistence. See [Self-learning and adaptive engineering memory](docs/SELF-LEARNING.md).
 
 ## Install on Windows
 
@@ -134,6 +146,7 @@ The builder runs tests, vet, PowerShell syntax checks, a legacy/secret hygiene g
 - [Connect ChatGPT](docs/CONNECT-CHATGPT.md)
 - [Recommended ChatGPT Project setup](docs/PROJECT-INSTRUCTIONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Self-learning](docs/SELF-LEARNING.md)
 - [Tool catalog](docs/TOOL-CATALOG.md)
 - [Windows runtime](docs/WINDOWS-NATIVE.md)
 - [Security policy](SECURITY.md)

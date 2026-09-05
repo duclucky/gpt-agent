@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -113,6 +115,87 @@ func TestSanitizeLearningTaskRedactsCredentialAssignments(t *testing.T) {
 	}
 	if !containsAny(got, []string{"[REDACTED]"}) {
 		t.Fatalf("expected redaction marker: %q", got)
+	}
+}
+
+func TestSanitizeLearningTaskRedactsBearerAndKnownTokenPrefixes(t *testing.T) {
+	got := sanitizeLearningTask("retry Authorization: Bearer bearer-secret-123 and sk-exampletoken123456 and ghp_exampletoken123456")
+	for _, secret := range []string{"bearer-secret-123", "sk-exampletoken123456", "ghp_exampletoken123456"} {
+		if strings.Contains(got, secret) {
+			t.Fatalf("token survived sanitization: %q", got)
+		}
+	}
+	if !strings.Contains(got, "[REDACTED]") || !strings.Contains(got, "[REDACTED_TOKEN]") {
+		t.Fatalf("expected bearer/token redaction markers: %q", got)
+	}
+}
+
+func TestLearningEvolutionDoesNotPersistRawToolArgumentsOrPayloads(t *testing.T) {
+	root := t.TempDir()
+	e := newLearningEvolution(root)
+	e.beginTask("repo", ".", "project:d:/repo", "Fix formatter", []string{"gpt-agent-repo-surgeon"})
+	e.observeTool(
+		"gpt_agent_full_shell",
+		json.RawMessage(`{"command":"Set-Content note.txt RAW_TOOL_SECRET_123"}`),
+		map[string]any{"stdout": "RAW_PAYLOAD_SECRET_456"},
+		nil,
+	)
+	buf, err := os.ReadFile(filepath.Join(root, "learning", "evolution.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(buf)
+	for _, secret := range []string{"RAW_TOOL_SECRET_123", "RAW_PAYLOAD_SECRET_456"} {
+		if strings.Contains(text, secret) {
+			t.Fatalf("raw tool data persisted in evolution state: %s", secret)
+		}
+	}
+}
+
+func TestLearningEvolutionResolvesCandidateLifecycle(t *testing.T) {
+	e := newLearningEvolution(t.TempDir())
+	scope := "project:d:/repo"
+	e.beginTask("repo", ".", scope, "Fix parser regression", []string{"gpt-agent-bug-hunter"})
+	e.observeTool("gpt_agent_run_command", json.RawMessage(`{"executable":"go","args":["test","./..."]}`), map[string]any{"exitCode": 1}, nil)
+	e.observeTool("gpt_agent_project_verify", json.RawMessage(`{}`), map[string]any{"passed": true}, nil)
+	e.beginTask("repo", ".", scope, "Next task", []string{"gpt-agent-repo-surgeon"})
+
+	ctx := e.context(scope, "parser regression", 6)
+	candidates := ctx["candidates"].([]map[string]any)
+	if len(candidates) == 0 {
+		t.Fatal("expected a learning candidate")
+	}
+	candidateID := candidates[0]["id"].(string)
+	resolved, err := e.resolveCandidates(scope, []string{candidateID}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := resolved["promoted"].([]string); len(got) != 1 || got[0] != candidateID {
+		t.Fatalf("resolution=%v", resolved)
+	}
+	ctx = e.context(scope, "parser regression", 6)
+	for _, candidate := range ctx["candidates"].([]map[string]any) {
+		if candidate["id"] == candidateID {
+			t.Fatalf("promoted candidate remained pending: %v", candidate)
+		}
+	}
+	statuses := e.stats()["candidateStatuses"].(map[string]int)
+	if statuses["promoted"] != 1 {
+		t.Fatalf("candidateStatuses=%v", statuses)
+	}
+	if _, err := e.resolveCandidates(scope, []string{candidateID}, nil); err == nil {
+		t.Fatal("already-resolved candidate was accepted again")
+	}
+}
+
+func TestLearningEvolutionRejectsCrossScopeCandidateResolution(t *testing.T) {
+	e := newLearningEvolution(t.TempDir())
+	e.db.Candidates = append(e.db.Candidates, learningCandidate{ID: "candidate-1", Scope: "project:a", Status: "pending"})
+	if err := e.validateCandidateResolution("project:b", []string{"candidate-1"}, nil); err == nil {
+		t.Fatal("cross-scope candidate resolution was accepted")
+	}
+	if err := e.validateCandidateResolution("project:a", []string{"candidate-1"}, []string{"candidate-1"}); err == nil {
+		t.Fatal("candidate was accepted as both promoted and dismissed")
 	}
 }
 
