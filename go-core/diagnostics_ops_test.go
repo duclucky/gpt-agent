@@ -63,7 +63,18 @@ func TestResolveManifestEntryRejectsTraversal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !filepath.IsAbs(got) || filepath.Clean(got) != filepath.Clean(inside) {
-		t.Fatalf("resolved manifest path=%q want=%q", got, inside)
+	if !filepath.IsAbs(got) {
+		t.Fatalf("resolved manifest path is not absolute: %q", got)
+	}
+	gotInfo, err := os.Stat(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantInfo, err := os.Stat(inside)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !os.SameFile(gotInfo, wantInfo) {
+		t.Fatalf("resolved manifest path=%q does not identify %q", got, inside)
 	}
 }
