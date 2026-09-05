@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestSelfCheckResultProtectsReservedFields(t *testing.T) {
 	item := selfCheckResult("source-git", "warn", map[string]any{
@@ -39,5 +43,27 @@ func TestMCPToolsListHealthRequiresDirectDeveloperCore(t *testing.T) {
 	ok, requiredPresent = mcpToolsListHealth(200, rawTools)
 	if ok || requiredPresent {
 		t.Fatalf("missing required direct developer tool should fail: ok=%v required=%v", ok, requiredPresent)
+	}
+}
+
+func TestResolveManifestEntryRejectsTraversal(t *testing.T) {
+	root := t.TempDir()
+	if _, err := resolveManifestEntry(root, "../outside.txt"); err == nil {
+		t.Fatal("manifest traversal entry was not rejected")
+	}
+	insideDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(insideDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	inside := filepath.Join(insideDir, "tool.exe")
+	if err := os.WriteFile(inside, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := resolveManifestEntry(root, "bin/tool.exe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !filepath.IsAbs(got) || filepath.Clean(got) != filepath.Clean(inside) {
+		t.Fatalf("resolved manifest path=%q want=%q", got, inside)
 	}
 }

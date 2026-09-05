@@ -212,6 +212,21 @@ func mcpToolsListHealth(listStatus int, rawTools []any) (bool, bool) {
 	return listStatus == 200 && len(rawTools) == 83 && requiredToolsPresent, requiredToolsPresent
 }
 
+func resolveManifestEntry(appRoot, name string) (string, error) {
+	rootReal, err := filepath.EvalSymlinks(appRoot)
+	if err != nil {
+		return "", err
+	}
+	candidate, err := canonicalForContainment(filepath.Join(appRoot, filepath.FromSlash(name)))
+	if err != nil {
+		return "", err
+	}
+	if !pathWithin(rootReal, candidate) {
+		return "", fmt.Errorf("manifest entry escapes application root: %s", name)
+	}
+	return candidate, nil
+}
+
 func (n *nativeTools) checkDistributionManifest() map[string]any {
 	manifestPath := filepath.Join(n.appRoot, "MANIFEST.sha256.json")
 	buf, err := os.ReadFile(manifestPath)
@@ -236,7 +251,15 @@ func (n *nativeTools) checkDistributionManifest() map[string]any {
 	sort.Strings(names)
 	for _, name := range names {
 		meta := manifest.Files[name]
-		file, err := os.ReadFile(filepath.Join(n.appRoot, filepath.FromSlash(name)))
+		entryPath, pathErr := resolveManifestEntry(n.appRoot, name)
+		if pathErr != nil {
+			mismatches = append(mismatches, name)
+			if len(mismatches) >= 20 {
+				break
+			}
+			continue
+		}
+		file, err := os.ReadFile(entryPath)
 		if err != nil {
 			mismatches = append(mismatches, name)
 		} else {
