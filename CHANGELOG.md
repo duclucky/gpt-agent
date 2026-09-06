@@ -6,6 +6,7 @@ All notable changes to GPT Agent are documented here.
 
 ### Changed
 
+- Added a safe Windows uninstaller that removes runtime/tooling and Scheduled Tasks while preserving local data, config, and workspace by default.
 - Updated GitHub Actions dependencies and `golang.org/x/sys` through verified dependency maintenance.
 - Added weekly Dependabot update configuration for Go modules and GitHub Actions.
 - Upgraded the embedded Learning Loop skill pack to `1.4.0` with explicit candidate review lifecycle and clearer adaptive-learning guidance.

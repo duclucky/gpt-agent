@@ -87,4 +87,22 @@ For v0.1.0, update by downloading a newer release and rerunning its installer. M
 
 ## Uninstall
 
-Stop/delete the two Scheduled Tasks, then remove `C:\GPTAgent`. Review the directory before deletion if you stored any project files in the default `C:\GPTAgent\workspace` path.
+Use the bundled uninstaller from the installed runtime or from an extracted release:
+
+```powershell
+C:\GPTAgent\runtime\scripts\windows\Uninstall-GPTAgent.ps1 -Confirm UNINSTALL
+```
+
+By default it removes the runtime, tooling, logs, and the `GPT Agent Runtime` / `GPT Agent Tunnel` Scheduled Tasks, while preserving:
+
+- `C:\GPTAgent\data` (learning state and runtime data);
+- `C:\GPTAgent\config` (including local tunnel configuration/secrets);
+- `C:\GPTAgent\workspace`.
+
+To also remove local data/config:
+
+```powershell
+C:\GPTAgent\runtime\scripts\windows\Uninstall-GPTAgent.ps1 -PurgeLocalData -Confirm UNINSTALL
+```
+
+Only add `-PurgeWorkspace` if you explicitly want the default workspace directory deleted. Review that directory first because it may contain project files.

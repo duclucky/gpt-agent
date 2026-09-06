@@ -86,6 +86,12 @@ Run it later with:
 C:\GPTAgent\runtime\scripts\windows\Configure-OpenAITunnel.ps1
 ```
 
+To uninstall while preserving local data/config/workspace by default:
+
+```powershell
+C:\GPTAgent\runtime\scripts\windows\Uninstall-GPTAgent.ps1 -Confirm UNINSTALL
+```
+
 ## Local setup wizard
 
 The setup wizard binds only to `127.0.0.1` on a random port and uses a one-time random URL token. It guides you through:
