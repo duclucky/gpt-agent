@@ -6,6 +6,8 @@ All notable changes to GPT Agent are documented here.
 
 ### Changed
 
+- Added a Windows CI release-contract gate that builds the distributable, verifies ZIP/manifest integrity and required release contents, checks the self-learning schema, and exercises safe uninstaller preserve/purge behavior.
+- Made release builds fail on unformatted Go sources instead of mutating source files with `gofmt -w` during packaging.
 - Added a safe Windows uninstaller that removes runtime/tooling and Scheduled Tasks while preserving local data, config, and workspace by default.
 - Updated GitHub Actions dependencies and `golang.org/x/sys` through verified dependency maintenance.
 - Added weekly Dependabot update configuration for Go modules and GitHub Actions.

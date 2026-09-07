@@ -20,9 +20,14 @@ Say "Cleaning release staging"
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $StageRoot
 New-Item -ItemType Directory -Force -Path $StageRoot,$OutputDir | Out-Null
 
-Say "Formatting Go sources"
-& gofmt.exe -w (Get-ChildItem -Path (Join-Path $SourceRoot "go-core") -Recurse -Filter "*.go" | ForEach-Object FullName)
+Say "Checking Go formatting"
+$goFiles = Get-ChildItem -Path (Join-Path $SourceRoot "go-core") -Recurse -Filter "*.go" | ForEach-Object FullName
+$formatDiff = & gofmt.exe -d $goFiles
 if ($LASTEXITCODE -ne 0) { Fail "gofmt failed" }
+if ($formatDiff) {
+  $formatDiff | Write-Host
+  Fail "Go formatting check failed. Run gofmt -w on the changed Go files."
+}
 
 Say "Running Go tests and vet"
 Push-Location (Join-Path $SourceRoot "go-core")

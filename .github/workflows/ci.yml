@@ -36,3 +36,6 @@ jobs:
             $errors | ForEach-Object { Write-Error $_.Message }
             exit 1
           }
+      - name: Release contract
+        shell: pwsh
+        run: .\scripts\windows\Test-ReleaseContract.ps1
