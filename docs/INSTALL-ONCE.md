@@ -16,10 +16,16 @@ Avoid selecting an entire drive unless that is explicitly intended.
 
 ## 3. Run the installer
 
-Open PowerShell in the extracted release directory:
+Open PowerShell in the extracted release directory. You can run a no-side-effect preflight first:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\windows\Install-GPTAgent.ps1 -WorkspaceRoot "D:\Projects" -PreflightOnly
+```
+
+Then install:
+
+```powershell
 .\scripts\windows\Install-GPTAgent.ps1 -WorkspaceRoot "D:\Projects"
 ```
 
@@ -83,7 +89,15 @@ Then restart `GPT Agent Runtime`. Keep workspace roots as narrow as practical.
 
 ## Update
 
-For v0.1.0, update by downloading a newer release and rerunning its installer. Mutable data and tunnel secrets live outside the copied runtime tree under `C:\GPTAgent\data` and `C:\GPTAgent\config`.
+Update by downloading/extracting the newer release and rerunning its installer from that extracted release directory. Existing `C:\GPTAgent\data\config.json` is preserved by default, along with learning state and tunnel secrets. The installer stops/replaces the existing `GPT Agent Runtime` task and waits for port `8765` to be released before starting the new runtime.
+
+If you intentionally want to regenerate runtime config from the new release defaults and the supplied `-WorkspaceRoot`, add:
+
+```powershell
+-ResetRuntimeConfig
+```
+
+Run `-PreflightOnly` before an update if you want to check prerequisites, existing Scheduled Task state, port `8765`, and whether runtime config will be preserved or regenerated without changing the machine.
 
 ## Uninstall
 

@@ -6,6 +6,9 @@ All notable changes to GPT Agent are documented here.
 
 ### Changed
 
+- Added a no-side-effect installer `-PreflightOnly` mode that reports prerequisites, Scheduled Task/port conflicts, and runtime-config preservation intent before install/update.
+- Made installer reruns preserve existing `data/config.json` by default; `-ResetRuntimeConfig` is now required to regenerate runtime config from release defaults.
+- Hardened update/reinstall runtime replacement by stopping the existing `GPT Agent Runtime` task, waiting for port `8765` to be released, and refusing to start over an unrelated listener.
 - Added a Windows CI release-contract gate that builds the distributable, verifies ZIP/manifest integrity and required release contents, checks the self-learning schema, and exercises safe uninstaller preserve/purge behavior.
 - Made release builds fail on unformatted Go sources instead of mutating source files with `gofmt -w` during packaging.
 - Added a safe Windows uninstaller that removes runtime/tooling and Scheduled Tasks while preserving local data, config, and workspace by default.

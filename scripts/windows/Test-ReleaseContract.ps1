@@ -70,6 +70,14 @@ try {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
     Set-Content -LiteralPath (Join-Path $dir "sentinel.txt") -Value $relative
   }
+  $installer = Join-Path $ExtractRoot "scripts\windows\Install-GPTAgent.ps1"
+  $preflightRoot = Join-Path $TempRoot "preflight-install"
+  $preflightWorkspace = Join-Path $TempRoot "preflight-workspace"
+  New-Item -ItemType Directory -Force -Path $preflightWorkspace | Out-Null
+  & $installer -InstallRoot $preflightRoot -WorkspaceRoot $preflightWorkspace -PreflightOnly -SkipOptionalTooling -SkipTunnelDownload -SkipSetupWizard
+  if ($LASTEXITCODE -ne 0) { Fail "Installer preflight failed with exit code $LASTEXITCODE" }
+  if (Test-Path -LiteralPath $preflightRoot) { Fail "Installer preflight created InstallRoot despite no-side-effect contract" }
+
   $uninstaller = Join-Path $ExtractRoot "scripts\windows\Uninstall-GPTAgent.ps1"
   $refused = $false
   try {

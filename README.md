@@ -57,10 +57,16 @@ The evolution state does **not** store raw tool arguments or raw tool results, a
 
 The release ZIP contains prebuilt `gpt-agent.exe` and `gpt-agent-setup.exe` binaries plus the installer scripts.
 
-Open PowerShell in the extracted release directory and run:
+Open PowerShell in the extracted release directory. Optionally run a no-side-effect preflight first:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\windows\Install-GPTAgent.ps1 -WorkspaceRoot "D:\Projects" -PreflightOnly
+```
+
+Then install:
+
+```powershell
 .\scripts\windows\Install-GPTAgent.ps1 -WorkspaceRoot "D:\Projects"
 ```
 
@@ -72,7 +78,8 @@ By default the installer:
 - creates and starts the `GPT Agent Runtime` logon task;
 - installs required/optional developer tooling;
 - downloads the official OpenAI `tunnel-client` and verifies its published SHA-256 checksum;
-- starts a one-time local setup wizard in your browser.
+- starts a one-time local setup wizard in your browser;
+- preserves an existing `data\config.json` on rerun/update unless `-ResetRuntimeConfig` is explicitly supplied.
 
 To skip the browser wizard during unattended installation:
 

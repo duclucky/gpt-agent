@@ -5,7 +5,9 @@ param(
   [string]$NativeToolsRoot = "",
   [switch]$SkipOptionalTooling,
   [switch]$SkipTunnelDownload,
-  [switch]$SkipSetupWizard
+  [switch]$SkipSetupWizard,
+  [switch]$PreflightOnly,
+  [switch]$ResetRuntimeConfig
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,6 +33,45 @@ function Require-Command([string]$Name) {
 function Invoke-RobocopyChecked([string]$From, [string]$To, [string[]]$RoboArgs) {
   & robocopy.exe $From $To @RoboArgs | Out-Host
   if ($LASTEXITCODE -gt 7) { throw "robocopy failed with exit code $LASTEXITCODE" }
+}
+
+function Test-CommandAvailable([string]$Name) {
+  return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue | Select-Object -First 1)
+}
+
+function Write-PreflightStatus([string]$Name, [bool]$Ready, [string]$Detail) {
+  $state = if ($Ready) { "OK" } else { "WARN" }
+  $color = if ($Ready) { "Green" } else { "Yellow" }
+  Write-Host ("[{0}] {1}: {2}" -f $state,$Name,$Detail) -ForegroundColor $color
+}
+
+if ($PreflightOnly) {
+  Say "GPT Agent install preflight (no changes will be made)"
+  $installFull = [IO.Path]::GetFullPath($InstallRoot)
+  $workspaceFull = [IO.Path]::GetFullPath($WorkspaceRoot)
+  $runtimeFull = [IO.Path]::GetFullPath($RuntimeRoot)
+  $sourceFull = [IO.Path]::GetFullPath($SourceRoot)
+  if ($installFull -eq [IO.Path]::GetPathRoot($installFull)) { throw "InstallRoot cannot be a drive root: $installFull" }
+  if ($sourceFull.TrimEnd('\') -eq $runtimeFull.TrimEnd('\')) { throw "Run the installer from an extracted release, not from the installed runtime directory." }
+  foreach ($required in @("config.example.json","scripts\windows\Run-NativeRuntime.ps1","scripts\windows\Configure-OpenAITunnel.ps1")) {
+    if (-not (Test-Path -LiteralPath (Join-Path $SourceRoot $required) -PathType Leaf)) { throw "Release source is incomplete; missing $required" }
+  }
+  Write-PreflightStatus "InstallRoot" $true $installFull
+  Write-PreflightStatus "WorkspaceRoot" (Test-Path -LiteralPath $workspaceFull -PathType Container) $(if (Test-Path -LiteralPath $workspaceFull -PathType Container) { $workspaceFull } else { "$workspaceFull (will be created)" })
+  foreach ($command in @("node.exe","npm.cmd","git.exe","robocopy.exe")) {
+    Write-PreflightStatus $command (Test-CommandAvailable $command) $(if (Test-CommandAvailable $command) { "available" } else { "missing; installer may use winget where supported" })
+  }
+  Write-PreflightStatus "PowerShell" ((Test-CommandAvailable "pwsh.exe") -or (Test-CommandAvailable "powershell.exe")) "required for Scheduled Tasks"
+  $taskExists = $false
+  try { $taskExists = $null -ne (Get-ScheduledTask -TaskName "GPT Agent Runtime" -ErrorAction SilentlyContinue) } catch {}
+  Write-PreflightStatus "GPT Agent Runtime task" (-not $taskExists) $(if ($taskExists) { "already exists; installer will stop and replace it" } else { "not installed" })
+  $portBusy = $false
+  try { $portBusy = $null -ne (Get-NetTCPConnection -LocalAddress "127.0.0.1" -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1) } catch {}
+  Write-PreflightStatus "127.0.0.1:8765" (-not $portBusy) $(if ($portBusy) { if ($taskExists) { "currently listening; installer will stop the existing runtime before replacement" } else { "already listening without the GPT Agent Runtime task; install will fail unless the port is released" } } else { "available" })
+  $configPath = Join-Path $DataRoot "config.json"
+  Write-PreflightStatus "Runtime config" $true $(if (Test-Path -LiteralPath $configPath -PathType Leaf) { if ($ResetRuntimeConfig) { "$configPath exists and will be regenerated" } else { "$configPath exists and will be preserved" } } else { "$configPath will be created" })
+  Write-Host "Preflight complete. No files, packages, tasks, or services were changed." -ForegroundColor Green
+  exit 0
 }
 
 function Refresh-ProcessPath {
@@ -352,8 +393,21 @@ if ($clangdFile) {
 }
 
 $ConfigPath = Join-Path $DataRoot "config.json"
-$configJson = $cfg | ConvertTo-Json -Depth 20
-[IO.File]::WriteAllText($ConfigPath, $configJson, (New-Object Text.UTF8Encoding($false)))
+if ((Test-Path -LiteralPath $ConfigPath -PathType Leaf) -and -not $ResetRuntimeConfig) {
+  try {
+    $null = Get-Content -Raw -LiteralPath $ConfigPath | ConvertFrom-Json
+  } catch {
+    throw "Existing runtime config is invalid JSON: $ConfigPath. Fix it or rerun with -ResetRuntimeConfig."
+  }
+  Warn "Preserving existing runtime config: $ConfigPath"
+  Warn "Use -ResetRuntimeConfig to regenerate it from config.example.json and -WorkspaceRoot."
+} else {
+  if ($ResetRuntimeConfig -and (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
+    Say "Regenerating runtime config because -ResetRuntimeConfig was requested..."
+  }
+  $configJson = $cfg | ConvertTo-Json -Depth 20
+  [IO.File]::WriteAllText($ConfigPath, $configJson, (New-Object Text.UTF8Encoding($false)))
+}
 New-Item -ItemType Directory -Force -Path (Join-Path $DataRoot "processes"),(Join-Path $DataRoot "artifacts") | Out-Null
 
 if (-not $SkipTunnelDownload) {
@@ -387,6 +441,25 @@ Say "Registering GPT Agent runtime task..."
 $runtimeRunner = Join-Path $RuntimeRoot "scripts\windows\Run-NativeRuntime.ps1"
 $runtimeAction = "`"$TaskPowerShell`" -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runtimeRunner`" -InstallRoot `"$InstallRoot`" -TempRoot `"$ScratchRoot`""
 $SchTasks = Join-Path $env:SystemRoot "System32\schtasks.exe"
+
+& $SchTasks /Query /TN "GPT Agent Runtime" 2>$null | Out-Null
+if ($LASTEXITCODE -eq 0) {
+  Say "Stopping existing GPT Agent runtime task before replacement..."
+  & $SchTasks /End /TN "GPT Agent Runtime" 2>$null | Out-Null
+  $stopDeadline = (Get-Date).AddSeconds(15)
+  do {
+    $portBusy = $false
+    try { $portBusy = $null -ne (Get-NetTCPConnection -LocalAddress "127.0.0.1" -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1) } catch {}
+    if (-not $portBusy) { break }
+    Start-Sleep -Milliseconds 250
+  } while ((Get-Date) -lt $stopDeadline)
+}
+$portBusy = $false
+try { $portBusy = $null -ne (Get-NetTCPConnection -LocalAddress "127.0.0.1" -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1) } catch {}
+if ($portBusy) {
+  throw "127.0.0.1:8765 is still in use after stopping the previous GPT Agent Runtime task. Release the port and retry."
+}
+
 & $SchTasks /Create /TN "GPT Agent Runtime" /SC ONLOGON /TR $runtimeAction /F | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "Failed to register GPT Agent Runtime task." }
 
