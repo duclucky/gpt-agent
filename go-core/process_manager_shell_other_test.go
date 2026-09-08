@@ -35,7 +35,11 @@ func TestPOSIXFullShellPreservesExitCodeAndCwd(t *testing.T) {
 	if got := strings.TrimSpace(result["stdout"].(string)); got != "mac-posix-shell" {
 		t.Fatalf("stdout=%q", got)
 	}
-	if got := result["cwdAbsolute"].(string); filepath.Clean(got) != filepath.Clean(root) {
-		t.Fatalf("cwdAbsolute=%q want=%q", got, root)
+	wantCwd, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := result["cwdAbsolute"].(string); filepath.Clean(got) != filepath.Clean(wantCwd) {
+		t.Fatalf("cwdAbsolute=%q want=%q", got, wantCwd)
 	}
 }
