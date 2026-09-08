@@ -154,9 +154,19 @@ func safeEnvironment(extra map[string]string) ([]string, error) {
 		m["TEMP"] = root
 		m["TMP"] = root
 	} else {
-		m["HOME"] = "/tmp/gpt-agent-home"
-		m["XDG_CACHE_HOME"] = "/tmp/gpt-agent-cache"
-		m["TMPDIR"] = "/tmp"
+		root := filepath.Join(os.TempDir(), "gpt-agent-safe")
+		home := filepath.Join(root, "home")
+		cache := filepath.Join(root, "cache")
+		goCache := filepath.Join(cache, "go-build")
+		for _, dir := range []string{root, home, cache, goCache} {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return nil, fmt.Errorf("create SAFE environment directory %s: %w", dir, err)
+			}
+		}
+		m["HOME"] = home
+		m["XDG_CACHE_HOME"] = cache
+		m["GOCACHE"] = goCache
+		m["TMPDIR"] = root
 	}
 	out := make([]string, 0, len(m))
 	ks := make([]string, 0, len(m))
@@ -538,11 +548,42 @@ func (p *processManager) resetShell() {
 		p.shell = nil
 	}
 }
+
+func (p *processManager) runPOSIXFullShell(ctx context.Context, workspaceID, cwd, cwdReal, command string, timeoutMS int, grant map[string]any) (map[string]any, error) {
+	candidates := []string{"zsh", "bash", "sh"}
+	var shell string
+	for _, candidate := range candidates {
+		if path, err := exec.LookPath(candidate); err == nil {
+			shell = path
+			break
+		}
+	}
+	if shell == "" {
+		return nil, errors.New("No POSIX shell found; expected zsh, bash, or sh")
+	}
+	started := time.Now()
+	result, err := collectCommand(ctx, shell, []string{"-lc", command}, cwdReal, os.Environ(), timeoutMS, p.n.cfg.Server.MaxToolOutputChars)
+	if err != nil {
+		return nil, err
+	}
+	rec := map[string]any{
+		"mode": "FULL_SHELL", "workspaceId": workspaceID, "cwd": firstNonEmpty(cwd, "."), "cwdAbsolute": cwdReal,
+		"shell": filepath.Base(shell), "command": command, "exitCode": result["exitCode"], "durationMs": time.Since(started).Milliseconds(),
+		"stdout": result["stdout"], "stderr": result["stderr"], "grantExpiresAt": grant["expiresAt"],
+	}
+	_, _ = p.n.audit.append(mergeMap(map[string]any{"type": "process.fullShell"}, rec))
+	return rec, nil
+}
+
 func (p *processManager) runFullShell(ctx context.Context, workspaceID, cwd, command string, timeoutMS int) (map[string]any, error) {
 	grant := p.n.readFullShellGrant()
 	active, _ := grant["active"].(bool)
 	if !active {
-		return nil, errors.New("FULL SHELL is locked. Run scripts\\windows\\Enable-FullShell.ps1 locally.")
+		hint := "scripts/windows/Enable-FullShell.ps1"
+		if runtime.GOOS == "darwin" {
+			hint = "scripts/macos/enable-full-shell.sh"
+		}
+		return nil, fmt.Errorf("FULL SHELL is locked. Run %s locally.", hint)
 	}
 	cwdReal, err := p.resolveCwd(workspaceID, cwd)
 	if err != nil {
@@ -550,6 +591,9 @@ func (p *processManager) runFullShell(ctx context.Context, workspaceID, cwd, com
 	}
 	if timeoutMS == 0 {
 		timeoutMS = defaultCommandTimeoutMS
+	}
+	if runtime.GOOS != "windows" {
+		return p.runPOSIXFullShell(ctx, workspaceID, cwd, cwdReal, command, timeoutMS, grant)
 	}
 	p.shellMu.Lock()
 	defer p.shellMu.Unlock()
@@ -735,6 +779,9 @@ func copyDisposableWorkspace(src, dst string, secrets []string) error {
 }
 
 func (p *processManager) runUntrusted(ctx context.Context, workspaceID, cwd, executable string, args []string, extra map[string]string, timeoutMS int) (map[string]any, error) {
+	if runtime.GOOS != "windows" {
+		return nil, fmt.Errorf("UNTRUSTED is unavailable on %s: no verified local isolation backend is configured", runtime.GOOS)
+	}
 	if err := p.checkSafe(executable, args); err != nil {
 		return nil, err
 	}
@@ -756,18 +803,15 @@ func (p *processManager) runUntrusted(ctx context.Context, workspaceID, cwd, exe
 		return nil, err
 	}
 	started := time.Now()
-	if runtime.GOOS == "windows" {
-		p.sandboxMu.Lock()
-		result, err := runWindowsSandbox(ctx, p.n, disposable, cwdReal, scratch, executable, args, extra, timeoutMS)
-		p.sandboxMu.Unlock()
-		if err != nil {
-			return nil, err
-		}
-		rec := map[string]any{"mode": "UNTRUSTED", "workspaceId": workspaceID, "cwd": firstNonEmpty(cwd, "."), "sourceRoot": cwdReal, "executable": executable, "args": args, "exitCode": result["exitCode"], "timedOut": result["timedOut"], "disposable": true, "sourceWritable": false, "sandboxed": true, "backend": "windows-sandbox", "kernelIsolated": true, "network": false, "networkIsolated": true, "sanitizedSecretFiles": len(secrets), "durationMs": time.Since(started).Milliseconds(), "stdout": result["stdout"], "stderr": result["stderr"], "stdoutTruncated": result["stdoutTruncated"], "stderrTruncated": result["stderrTruncated"]}
-		_, _ = p.n.audit.append(mergeMap(map[string]any{"type": "process.untrusted"}, rec))
-		return rec, nil
+	p.sandboxMu.Lock()
+	result, err := runWindowsSandbox(ctx, p.n, disposable, cwdReal, scratch, executable, args, extra, timeoutMS)
+	p.sandboxMu.Unlock()
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("UNTRUSTED Go runtime currently requires the Windows Sandbox backend on this host")
+	rec := map[string]any{"mode": "UNTRUSTED", "workspaceId": workspaceID, "cwd": firstNonEmpty(cwd, "."), "sourceRoot": cwdReal, "executable": executable, "args": args, "exitCode": result["exitCode"], "timedOut": result["timedOut"], "disposable": true, "sourceWritable": false, "sandboxed": true, "backend": "windows-sandbox", "kernelIsolated": true, "network": false, "networkIsolated": true, "sanitizedSecretFiles": len(secrets), "durationMs": time.Since(started).Milliseconds(), "stdout": result["stdout"], "stderr": result["stderr"], "stdoutTruncated": result["stdoutTruncated"], "stderrTruncated": result["stderrTruncated"]}
+	_, _ = p.n.audit.append(mergeMap(map[string]any{"type": "process.untrusted"}, rec))
+	return rec, nil
 }
 func mergeMap(a, b map[string]any) map[string]any {
 	out := cloneMap(a)

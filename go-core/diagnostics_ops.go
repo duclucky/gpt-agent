@@ -384,6 +384,8 @@ func (n *nativeTools) selfCheckTool(ctx context.Context, raw json.RawMessage) (m
 			status = "pass"
 		}
 		push("untrusted-backend", status, map[string]any{"backend": "windows-sandbox", "available": available, "kernelIsolated": available, "networkIsolated": available})
+	} else if runtime.GOOS == "darwin" {
+		push("untrusted-backend", "skip", map[string]any{"backend": "unavailable", "available": false, "reason": "macOS MVP does not claim an isolation backend equivalent to Windows Sandbox"})
 	}
 
 	healthStatus := 0
@@ -491,6 +493,25 @@ func (n *nativeTools) selfCheckTool(ctx context.Context, raw json.RawMessage) (m
 				s = "pass"
 			}
 			push("tunnel", s, map[string]any{"scheduledTask": code == 0, "readyHttpStatus": readyStatus})
+		}
+	} else if runtime.GOOS == "darwin" {
+		taskCtx, taskCancel := context.WithTimeout(ctx, 5*time.Second)
+		uid := probeFirstLine(taskCtx, "id", "-u")
+		code := -1
+		if uid != "" {
+			code, _, _, _ = runCapture(taskCtx, "launchctl", []string{"print", "gui/" + uid + "/com.duclucky.gpt-agent.tunnel"}, "", nil)
+		}
+		taskCancel()
+		if !tunnelURLAllowed {
+			push("tunnel", "fail", map[string]any{"reason": "Tunnel ready URL must use an HTTP(S) loopback host."})
+		} else if code != 0 && readyStatus == 0 {
+			push("tunnel", "skip", map[string]any{"reason": "GPT Agent Tunnel launchd agent is not installed"})
+		} else {
+			s := "fail"
+			if readyStatus == 200 {
+				s = "pass"
+			}
+			push("tunnel", s, map[string]any{"launchdAgent": code == 0, "readyHttpStatus": readyStatus})
 		}
 	}
 

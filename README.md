@@ -4,7 +4,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/duclucky/gpt-agent)](https://github.com/duclucky/gpt-agent/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**GPT Agent** is a local developer runtime for ChatGPT on Windows. It gives ChatGPT controlled access to your codebase, Git, terminal, language servers, debugger, SQLite tools, local HTTP services, adaptive project memory, reusable engineering skills, checkpoints, audit logs, and Windows Sandbox-backed command execution.
+**GPT Agent** is a local developer runtime for ChatGPT on Windows and macOS. It gives ChatGPT controlled access to your codebase, Git, terminal, language servers, debugger, SQLite tools, local HTTP services, adaptive project memory, reusable engineering skills, checkpoints, and audit logs. Windows can additionally use Windows Sandbox for the stronger `gpt_agent_untrusted_run` isolation backend.
 
 > Independent community project. Not an official OpenAI product and not affiliated with or endorsed by OpenAI.
 
@@ -12,11 +12,11 @@
 
 GPT Agent is intentionally **ChatGPT-only**. It does not embed a second coding agent, model router, external coding harness, or model-provider gateway. ChatGPT remains the reasoning/agent loop; GPT Agent is the local execution layer.
 
-The Windows v0.1.0 build exposes **83 MCP tools**: 79 native tools plus 4 bounded async job tools.
+The runtime exposes **83 MCP tools**: 79 native tools plus 4 bounded async job tools. The current published `v0.1.0` artifact is Windows-only; Apple Silicon macOS support is being prepared under `[Unreleased]`.
 
 **[Download the latest Windows release](https://github.com/duclucky/gpt-agent/releases/latest)**
 
-Installation guide: [docs/INSTALL-ONCE.md](docs/INSTALL-ONCE.md)
+Windows installation: [docs/INSTALL-ONCE.md](docs/INSTALL-ONCE.md) · macOS: [docs/MACOS.md](docs/MACOS.md)
 
 ## Architecture
 
@@ -36,7 +36,8 @@ GPT Agent on 127.0.0.1:8765
   +-- local HTTP requests
   +-- memory / reusable coding skills
   +-- audit chain / self-check
-  +-- Windows Sandbox for isolated execution
+  +-- platform lifecycle: Windows Scheduled Tasks / macOS launchd
+  +-- Windows Sandbox for isolated untrusted execution (Windows only)
 ```
 
 Browser automation is intentionally not included in v0.1.0. It will only be added when it has a complete independently distributable runtime.
@@ -99,6 +100,17 @@ To uninstall while preserving local data/config/workspace by default:
 C:\GPTAgent\runtime\scripts\windows\Uninstall-GPTAgent.ps1 -Confirm UNINSTALL
 ```
 
+## Install on macOS (Apple Silicon)
+
+The macOS target uses the same Go runtime and 83-tool catalog. It installs at user level and uses `launchd` instead of Windows Scheduled Tasks. From an extracted macOS arm64 release:
+
+```bash
+./scripts/macos/install-gpt-agent.sh --workspace-root "$HOME/Projects" --preflight-only
+./scripts/macos/install-gpt-agent.sh --workspace-root "$HOME/Projects"
+```
+
+Default install root is `~/.local/share/gpt-agent`. See [docs/MACOS.md](docs/MACOS.md) for lifecycle, Tunnel setup, FULL SHELL, uninstall, and the explicit macOS MVP isolation limitation.
+
 ## Local setup wizard
 
 The setup wizard binds only to `127.0.0.1` on a random port and uses a one-time random URL token. It guides you through:
@@ -106,7 +118,7 @@ The setup wizard binds only to `127.0.0.1` on a random port and uses a one-time 
 1. Create or select an OpenAI Tunnel and copy its `tunnel_...` ID.
 2. Create a **Restricted runtime API key** with **Tunnels Read + Use**.
 3. Paste the Tunnel ID and runtime key into the local wizard.
-4. GPT Agent saves the key into an ACL-restricted local secret file. The tunnel profile stores only a `file:` reference, never the literal key.
+4. GPT Agent saves the key into a permissions-restricted local secret file (Windows ACL or mode `0600` on macOS). The tunnel profile stores only a `file:` reference, never the literal key.
 5. The wizard runs `tunnel-client doctor --explain`, registers/starts `GPT Agent Tunnel`, and waits for `/readyz`.
 6. Open ChatGPT Settings → Connectors, choose **Connection: Tunnel**, then select or paste the same Tunnel ID.
 
@@ -153,6 +165,14 @@ Build the distributable package from the repository root:
 
 The builder runs tests, vet, PowerShell syntax checks, a legacy/secret hygiene gate, compiles both binaries, generates `MANIFEST.sha256.json`, creates the Windows ZIP, and writes its SHA-256 file.
 
+On macOS Apple Silicon, run the native release contract:
+
+```bash
+bash ./scripts/macos/test-release-contract.sh --arch arm64
+```
+
+It builds the macOS archive, runs native runtime/`launchd` smoke checks, verifies manifest/archive integrity, and exercises installer preflight plus uninstaller safety.
+
 ## Documentation
 
 - [Install once](docs/INSTALL-ONCE.md)
@@ -162,6 +182,7 @@ The builder runs tests, vet, PowerShell syntax checks, a legacy/secret hygiene g
 - [Self-learning](docs/SELF-LEARNING.md)
 - [Tool catalog](docs/TOOL-CATALOG.md)
 - [Windows runtime](docs/WINDOWS-NATIVE.md)
+- [macOS runtime](docs/MACOS.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)

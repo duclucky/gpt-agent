@@ -43,3 +43,8 @@ GPT Agent is a local execution layer for ChatGPT. The public project does not ai
 ## Contributing to the roadmap
 
 Open a feature request describing the user problem, expected workflow, security implications, and why the change belongs in the public GPT Agent runtime. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Cross-platform
+
+- Apple Silicon macOS MVP: runtime, launchd, Tunnel setup, installer/uninstaller, release contract.
+- Follow-up: verified macOS isolation backend for `gpt_agent_untrusted_run`, Intel macOS validation, signing/notarization, and `.pkg` packaging.

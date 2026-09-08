@@ -39,3 +39,22 @@ jobs:
       - name: Release contract
         shell: pwsh
         run: .\scripts\windows\Test-ReleaseContract.ps1
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go-core/go.mod
+          cache-dependency-path: go-core/go.sum
+      - name: Go test
+        working-directory: go-core
+        run: go test ./...
+      - name: Go vet
+        working-directory: go-core
+        run: go vet ./...
+      - name: Shell syntax
+        run: find scripts/macos -name '*.sh' -print0 | xargs -0 -n1 bash -n
+      - name: macOS arm64 release contract
+        run: bash ./scripts/macos/test-release-contract.sh --arch arm64

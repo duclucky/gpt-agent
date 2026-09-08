@@ -968,7 +968,7 @@
       "openWorldHint": false,
       "readOnlyHint": false
     },
-    "description": "Run an allowed command against a disposable secret-sanitized copy of a project in bubblewrap. The real source is not mounted, network is always disabled, and the scratch copy is deleted afterward. This is stronger repository containment but not a malware-analysis VM/kernel boundary.",
+    "description": "Run an allowed command against a disposable secret-sanitized copy of a project using the strongest supported local isolation backend. On Windows this uses Windows Sandbox. Platforms without a verified isolation backend return an explicit capability error rather than silently weakening containment.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {

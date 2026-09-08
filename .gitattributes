@@ -10,4 +10,5 @@ go.sum text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.js text eol=lf
+*.sh text eol=lf
 *.ps1 text eol=crlf

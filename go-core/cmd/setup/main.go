@@ -68,7 +68,7 @@ type saveResponse struct {
 }
 
 func main() {
-	installRoot := flag.String("install-root", `C:\GPTAgent`, "GPT Agent installation root")
+	installRoot := flag.String("install-root", defaultInstallRoot(), "GPT Agent installation root")
 	noOpen := flag.Bool("no-open", false, "do not open the browser automatically")
 	timeout := flag.Duration("timeout", 30*time.Minute, "maximum wizard lifetime")
 	flag.Parse()
@@ -115,7 +115,7 @@ func main() {
 	select {
 	case <-a.done:
 	case <-timer.C:
-		fmt.Fprintln(os.Stderr, "Setup wizard timed out. GPT Agent remains installed; rerun Configure-OpenAITunnel.ps1 to continue.")
+		fmt.Fprintf(os.Stderr, "Setup wizard timed out. GPT Agent remains installed; rerun %s to continue.\n", configureCommandHint())
 	case err := <-serveErr:
 		if err != nil {
 			fatal(err)
@@ -248,7 +248,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 func (a *app) status(ctx context.Context) statusResponse {
 	out := statusResponse{}
 	out.RuntimeHealthy = probeHTTP(ctx, "http://127.0.0.1:8765/healthz")
-	out.TunnelClientPresent = fileExists(filepath.Join(a.installRoot, "bin", "tunnel-client.exe"))
+	out.TunnelClientPresent = fileExists(filepath.Join(a.installRoot, "bin", tunnelClientExecutable()))
 	profile := filepath.Join(a.installRoot, "config", "tunnel-client", "gpt-agent.yaml")
 	secret := filepath.Join(a.installRoot, "config", "secrets", "control-plane-api-key.txt")
 	out.ProfilePresent = fileExists(profile)
@@ -272,9 +272,9 @@ func (a *app) configure(parent context.Context, req saveRequest) (saveResponse, 
 	if !tunnelIDRE.MatchString(tunnelID) {
 		return resp, errors.New("Tunnel ID must match tunnel_ followed by 32 lowercase hexadecimal characters.")
 	}
-	bin := filepath.Join(a.installRoot, "bin", "tunnel-client.exe")
+	bin := filepath.Join(a.installRoot, "bin", tunnelClientExecutable())
 	if !fileExists(bin) {
-		return resp, errors.New("tunnel-client.exe is missing. Rerun the GPT Agent installer without -SkipTunnelDownload.")
+		return resp, errors.New("tunnel-client is missing. Rerun the GPT Agent installer with tunnel download enabled.")
 	}
 	if !probeHTTP(parent, "http://127.0.0.1:8765/healthz") {
 		return resp, errors.New("GPT Agent runtime is not healthy on 127.0.0.1:8765. Start GPT Agent Runtime and retry.")
@@ -364,7 +364,104 @@ func writeSecretFile(path, secret string) error {
 	return nil
 }
 
+func defaultInstallRoot() string {
+	if runtime.GOOS == "windows" {
+		return `C:\GPTAgent`
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || strings.TrimSpace(home) == "" {
+		return ".gpt-agent"
+	}
+	return filepath.Join(home, ".local", "share", "gpt-agent")
+}
+
+func tunnelClientExecutable() string {
+	if runtime.GOOS == "windows" {
+		return "tunnel-client.exe"
+	}
+	return "tunnel-client"
+}
+
+func configureCommandHint() string {
+	if runtime.GOOS == "darwin" {
+		return "scripts/macos/configure-openai-tunnel.sh"
+	}
+	return "scripts/windows/Configure-OpenAITunnel.ps1"
+}
+
+func launchdTaskLabel(name string) string {
+	switch name {
+	case "GPT Agent Runtime":
+		return "com.duclucky.gpt-agent.runtime"
+	case "GPT Agent Tunnel":
+		return "com.duclucky.gpt-agent.tunnel"
+	default:
+		return ""
+	}
+}
+
+func launchdDomain() (string, error) {
+	current, err := user.Current()
+	if err != nil {
+		return "", fmt.Errorf("resolve current macOS user: %w", err)
+	}
+	if strings.TrimSpace(current.Uid) == "" {
+		return "", errors.New("current macOS user has no uid")
+	}
+	return "gui/" + current.Uid, nil
+}
+
+func launchdPlistPath(label string) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "Library", "LaunchAgents", label+".plist"), nil
+}
+
 func registerTunnelTask(ctx context.Context, installRoot string) error {
+	if runtime.GOOS == "darwin" {
+		runner := filepath.Join(installRoot, "runtime", "scripts", "macos", "run-native-tunnel.sh")
+		if !fileExists(runner) {
+			return fmt.Errorf("tunnel runner is missing: %s", runner)
+		}
+		label := launchdTaskLabel("GPT Agent Tunnel")
+		plistPath, err := launchdPlistPath(label)
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(filepath.Dir(plistPath), 0o755); err != nil {
+			return err
+		}
+		logs := filepath.Join(installRoot, "logs")
+		if err := os.MkdirAll(logs, 0o755); err != nil {
+			return err
+		}
+		plist := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>%s</string>
+<key>ProgramArguments</key><array><string>/bin/bash</string><string>%s</string><string>%s</string></array>
+<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
+<key>StandardOutPath</key><string>%s</string><key>StandardErrorPath</key><string>%s</string>
+</dict></plist>`, html.EscapeString(label), html.EscapeString(runner), html.EscapeString(installRoot), html.EscapeString(filepath.Join(logs, "tunnel-launchd.log")), html.EscapeString(filepath.Join(logs, "tunnel-launchd.err.log")))
+		if err := os.WriteFile(plistPath, []byte(plist), 0o644); err != nil {
+			return fmt.Errorf("write launchd plist: %w", err)
+		}
+		domain, err := launchdDomain()
+		if err != nil {
+			return err
+		}
+		_, _ = runCapture(ctx, "launchctl", "bootout", domain+"/"+label)
+		out, err := runCapture(ctx, "launchctl", "bootstrap", domain, plistPath)
+		if err != nil {
+			return fmt.Errorf("register GPT Agent Tunnel launchd agent: %s", sanitizeOutput(out, ""))
+		}
+		return nil
+	}
+	if runtime.GOOS != "windows" {
+		return fmt.Errorf("automatic tunnel startup is not supported on %s", runtime.GOOS)
+	}
 	shell, err := exec.LookPath("pwsh.exe")
 	if err != nil {
 		shell, err = exec.LookPath("powershell.exe")
@@ -387,16 +484,52 @@ func registerTunnelTask(ctx context.Context, installRoot string) error {
 func taskExists(ctx context.Context, name string) bool {
 	c, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
+	if runtime.GOOS == "darwin" {
+		label := launchdTaskLabel(name)
+		if label == "" {
+			return false
+		}
+		domain, err := launchdDomain()
+		if err != nil {
+			return false
+		}
+		_, err = runCapture(c, "launchctl", "print", domain+"/"+label)
+		return err == nil
+	}
+	if runtime.GOOS != "windows" {
+		return false
+	}
 	_, err := runCapture(c, "schtasks.exe", "/Query", "/TN", name, "/FO", "LIST")
 	return err == nil
 }
 
 func endTask(ctx context.Context, name string) error {
+	if runtime.GOOS == "darwin" {
+		label := launchdTaskLabel(name)
+		domain, err := launchdDomain()
+		if err != nil {
+			return err
+		}
+		_, err = runCapture(ctx, "launchctl", "bootout", domain+"/"+label)
+		return err
+	}
 	_, err := runCapture(ctx, "schtasks.exe", "/End", "/TN", name)
 	return err
 }
 
 func startTask(ctx context.Context, name string) error {
+	if runtime.GOOS == "darwin" {
+		label := launchdTaskLabel(name)
+		domain, err := launchdDomain()
+		if err != nil {
+			return err
+		}
+		out, err := runCapture(ctx, "launchctl", "kickstart", "-k", domain+"/"+label)
+		if err != nil {
+			return fmt.Errorf("start %s launchd agent: %s", name, sanitizeOutput(out, ""))
+		}
+		return nil
+	}
 	out, err := runCapture(ctx, "schtasks.exe", "/Run", "/TN", name)
 	if err != nil {
 		return fmt.Errorf("start %s task: %s", name, sanitizeOutput(out, ""))
@@ -421,7 +554,7 @@ func waitTunnelReady(ctx context.Context, healthURLFile string, max time.Duratio
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
-	return "", errors.New("Tunnel task started but /readyz did not become healthy within 60 seconds. Check C:\\GPTAgent\\logs\\tunnel.log and rerun the wizard.")
+	return "", fmt.Errorf("Tunnel startup completed but /readyz did not become healthy within 60 seconds. Check %s and rerun the wizard.", filepath.Join(filepath.Dir(filepath.Dir(healthURLFile)), "logs", "tunnel.log"))
 }
 
 func probeHTTP(parent context.Context, url string) bool {
@@ -501,10 +634,14 @@ func fileExists(path string) bool {
 }
 
 func openBrowser(url string) error {
-	if runtime.GOOS != "windows" {
-		return errors.New("automatic browser launch is currently supported on Windows only")
+	switch runtime.GOOS {
+	case "windows":
+		return exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		return exec.Command("open", url).Start()
+	default:
+		return fmt.Errorf("automatic browser launch is not supported on %s", runtime.GOOS)
 	}
-	return exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url).Start()
 }
 
 const setupHTML = `<!doctype html>
@@ -516,7 +653,7 @@ const setupHTML = `<!doctype html>
 <ol class="progress" aria-label="Setup progress"><li id="progress1" aria-current="step"><span class="progress-num">Step 1</span>Choose Tunnel</li><li id="progress2"><span class="progress-num">Step 2</span>Create key</li><li id="progress3"><span class="progress-num">Step 3</span>Connect</li><li id="progress4"><span class="progress-num">Step 4</span>Finish in ChatGPT</li></ol>
 <section class="panel" aria-labelledby="readinessTitle"><h2 id="readinessTitle">This computer</h2><p>GPT Agent checks these automatically. You only need to act if an item says <strong>Needs attention</strong>.</p><div id="status" class="status-grid" role="status" aria-live="polite" aria-atomic="true"><div class="status-item warn"><span class="status-label">Local setup</span><span class="status-value">Checking…</span></div></div></section>
 <section class="step-card" aria-labelledby="step1Title"><div class="step-row"><div class="step-num" aria-hidden="true">1</div><div class="step-body"><h2 id="step1Title">Choose your OpenAI Tunnel</h2><p>The Tunnel is the private connection between this computer and your ChatGPT workspace.</p><ol class="instruction-list"><li>Click <strong>Open Platform Tunnels</strong>.</li><li>Create a Tunnel, or open the one you want to use with this ChatGPT workspace.</li><li>Copy its ID. It starts with <code>tunnel_</code>.</li></ol><div class="actions"><a class="btn" rel="noreferrer" target="_blank" href="` + platformTunnelsURL + `">Open Platform Tunnels</a><a class="btn" rel="noreferrer" target="_blank" href="` + rolesURL + `">Open Roles &amp; Permissions</a></div><label for="tunnelId">Tunnel ID</label><input id="tunnelId" aria-describedby="tunnelHint" autocomplete="off" spellcheck="false" placeholder="tunnel_0123456789abcdef0123456789abcdef"><div class="helper example" id="tunnelHint">Example: <code>tunnel_0123456789abcdef0123456789abcdef</code></div></div></div></section>
-<section class="step-card" aria-labelledby="step2Title"><div class="step-row"><div class="step-num" aria-hidden="true">2</div><div class="step-body"><h2 id="step2Title">Create a restricted runtime key</h2><p>This key lets the official OpenAI tunnel client use the Tunnel. It does not give GPT Agent general Admin access.</p><ol class="instruction-list"><li>Click <strong>Open Runtime API Keys</strong> and create a <strong>Restricted</strong> key.</li><li>For <strong>Tunnels</strong>, allow only <strong>Read</strong> and <strong>Use</strong>.</li><li>Copy the new key and paste it below.</li></ol><div class="actions"><a class="btn" rel="noreferrer" target="_blank" href="` + runtimeKeysURL + `">Open Runtime API Keys</a></div><label for="apiKey">Runtime API key</label><div class="field-row"><input id="apiKey" type="password" aria-describedby="keyHint" autocomplete="new-password" spellcheck="false" placeholder="Paste runtime API key"><button id="toggleKey" type="button" aria-controls="apiKey" aria-pressed="false">Show</button></div><div class="helper" id="keyHint">The key stays on this computer in an ACL-restricted secret file. It is never written into this repository or stored directly in the Tunnel profile.</div></div></div></section>
+<section class="step-card" aria-labelledby="step2Title"><div class="step-row"><div class="step-num" aria-hidden="true">2</div><div class="step-body"><h2 id="step2Title">Create a restricted runtime key</h2><p>This key lets the official OpenAI tunnel client use the Tunnel. It does not give GPT Agent general Admin access.</p><ol class="instruction-list"><li>Click <strong>Open Runtime API Keys</strong> and create a <strong>Restricted</strong> key.</li><li>For <strong>Tunnels</strong>, allow only <strong>Read</strong> and <strong>Use</strong>.</li><li>Copy the new key and paste it below.</li></ol><div class="actions"><a class="btn" rel="noreferrer" target="_blank" href="` + runtimeKeysURL + `">Open Runtime API Keys</a></div><label for="apiKey">Runtime API key</label><div class="field-row"><input id="apiKey" type="password" aria-describedby="keyHint" autocomplete="new-password" spellcheck="false" placeholder="Paste runtime API key"><button id="toggleKey" type="button" aria-controls="apiKey" aria-pressed="false">Show</button></div><div class="helper" id="keyHint">The key stays on this computer in a permissions-restricted secret file. It is never written into this repository or stored directly in the Tunnel profile.</div></div></div></section>
 <section class="step-card" aria-labelledby="step3Title"><div class="step-row"><div class="step-num" aria-hidden="true">3</div><div class="step-body"><h2 id="step3Title">Connect this computer</h2><p>GPT Agent will validate the Tunnel and key, save the local Tunnel settings, start the connection, and confirm that it is healthy.</p><div class="save-row"><button id="save" class="primary" type="button">Save and connect</button></div><div id="saveMessage" class="notice hidden" role="status" aria-live="polite" aria-atomic="true"></div><details id="doctorWrap" class="technical hidden"><summary>Technical validation details</summary><pre id="doctor" class="result"></pre></details></div></div></section>
 <section id="finishCard" class="step-card success-card hidden" aria-labelledby="step4Title"><div class="step-row"><div class="step-num" aria-hidden="true">4</div><div class="step-body"><span class="success-badge">Local connection ready</span><h2 id="step4Title" class="success-title" tabindex="-1">Finish in ChatGPT</h2><p>The local side is connected. Use this same Tunnel in ChatGPT.</p><div class="tunnel-copy"><div id="finalTunnelId" class="tunnel-id mono" aria-label="Connected Tunnel ID"></div><button id="copyTunnel" type="button">Copy Tunnel ID</button></div><div class="path"><strong>In ChatGPT:</strong> Settings → Connectors → <strong>Connection: Tunnel</strong> → select this Tunnel, or paste the Tunnel ID if asked.</div><p class="security-note">This is the current Connector/Tunnel flow, not the legacy plugin setup.</p><div class="actions"><a class="btn primary" rel="noreferrer" target="_blank" href="` + chatGPTConnectURL + `">Open ChatGPT Connectors</a><button id="finish" type="button">Finish setup</button></div></div></div></section>
 <p class="foot">This one-time wizard runs only on 127.0.0.1 with a random port and one-time URL token. Independent community project; not an official OpenAI product.</p></main>

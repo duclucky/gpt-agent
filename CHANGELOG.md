@@ -4,8 +4,14 @@ All notable changes to GPT Agent are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Added Apple Silicon macOS (`darwin/arm64`) packaging, user-level installer, `launchd` runtime/Tunnel lifecycle, setup-wizard integration, FULL SHELL support, uninstall flow, release builder/contract, and macOS CI.
+- Added macOS documentation and an explicit platform capability policy: the public 83-tool catalog is preserved, while `gpt_agent_untrusted_run` reports unavailable on macOS until a verified isolation backend exists.
+
 ### Changed
 
+- Made POSIX SAFE execution use isolated temporary HOME/cache directories and added native POSIX FULL SHELL execution behind the existing time-bounded local grant.
 - Added a no-side-effect installer `-PreflightOnly` mode that reports prerequisites, Scheduled Task/port conflicts, and runtime-config preservation intent before install/update.
 - Made installer reruns preserve existing `data/config.json` by default; `-ResetRuntimeConfig` is now required to regenerate runtime config from release defaults.
 - Hardened update/reinstall runtime replacement by stopping the existing `GPT Agent Runtime` task, waiting for port `8765` to be released, and refusing to start over an unrelated listener.
